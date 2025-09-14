@@ -9,20 +9,28 @@
       --bg:#faf7f9; --text:#2b2a2a; --primary:#d81b60; --primary-dark:#a31447;
       --accent:#6a1b9a; --line:#e9d7e5; --card:#ffffff;
       --badge-yellow:#ffd54f; --badge-green:#2e7d32; --badge-red:#c62828;
+      --valid-bg:#c8e6c9;      /* vert doux */
+      --valid-border:#81c784;
+      --cell-bg:#faf8fc;       /* fond cellule léger */
+      --cell-border:#eadff0;
+      --col-head:#f3e3ee;
     }
     body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: 2rem; }
-    h1, #info-semaine { text-align: center; }
-    h1 { color:var(--accent); }
+    h1 { text-align: center; color:var(--accent); margin-bottom:.25rem; }
+    #info-semaine { text-align:center; margin-bottom:1rem; color:#544a5d; }
+
     .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 1rem; }
     .toolbar button {
       padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
       box-shadow: 0 4px 12px rgba(216,27,96,.15);
     }
     .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
+
+    /* Tableau d'édition (inchangé) */
     table { width: 100%; border-collapse: collapse; background: var(--card); margin-top: 1rem; border:1px solid var(--line); box-shadow: 0 10px 30px rgba(106,27,154,.08); }
     th, td { padding: 1rem; border: 1px solid var(--line); text-align: center; }
-    th { background: #f3e3ee; color: #3c2a52; }
-    select { margin: 0.3rem 0.2rem; padding: 0.6rem; border-radius:10px; border:1px solid var(--line); }
+    th { background: var(--col-head); color: #3c2a52; }
+    select { margin: 0.3rem 0.2rem; padding: 0.6rem; border-radius:10px; border:1px solid var(--line); background:#fff; }
     .statut { display: inline-block; padding: 0.35rem 0.65rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; }
     .validé { background-color: var(--badge-green); color: white; }
     .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
@@ -32,21 +40,40 @@
     .refuser-btn { background-color: var(--badge-red); color: white; }
     .total { font-weight: bold; }
     .horaire-group { display: flex; justify-content: center; align-items: center; gap: 0.25rem; margin-bottom: 0.5rem; }
-    /* Planning validé */
-    .planning { margin-top:2rem; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow: 0 10px 30px rgba(106,27,154,.08); }
-    .planning header { padding:1rem 1.25rem; border-bottom:1px solid var(--line); color:var(--accent); font-weight:bold; }
-    .planning .grid { display:grid; grid-template-columns: 120px 1fr; }
-    .planning .day { border-top:1px solid var(--line); padding: .85rem 1.25rem; display:flex; gap:1rem; }
-    .planning .day:first-child { border-top:none; }
-    .planning .day h3 { width:120px; margin:0; color:#3c2a52; }
-    .planning .slots { display:flex; flex-wrap:wrap; gap:.5rem; }
-    .planning .slot { background:#f7eef5; border:1px solid #eed5ea; padding:.35rem .6rem; border-radius:999px; }
-    /* Impression : n'imprimer que le planning */
+
+    /* ========= Planning de la semaine (grille) ========= */
+    .planning { margin-top:2rem; }
+    .planning .heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+    .planning h2 { margin:0; color:var(--accent); font-size:1.15rem; }
+
+    .weekly-grid {
+      width:100%;
+      border:1px solid var(--cell-border);
+      border-radius:12px;
+      overflow:hidden;
+      background:var(--card);
+      box-shadow: 0 10px 30px rgba(106,27,154,.08);
+    }
+    .wg-row { display:grid; grid-template-columns: 180px repeat(5, 1fr); }
+    .wg-row.header { background:var(--col-head); font-weight:bold; color:#3c2a52; }
+    .wg-cell { border-top:1px solid var(--cell-border); border-right:1px solid var(--cell-border); padding:.6rem .7rem; background:var(--cell-bg); min-height:48px; display:flex; align-items:center; gap:.35rem; }
+    .wg-row .wg-cell:first-child { background:#fff; font-weight:bold; color:#3c2a52; }
+    .wg-row .wg-cell:last-child { border-right:none; }
+    .pill {
+      display:inline-flex; align-items:center; gap:.4rem;
+      background:var(--valid-bg); border:1px solid var(--valid-border);
+      padding:.28rem .55rem; border-radius:8px; font-weight:600; color:#1b5e20; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+      white-space:nowrap;
+    }
+    .empty { color:#8b7f92; font-style:italic; }
+
+    /* Impression : n'imprimer que la grille */
     @media print{
       body{ background:#fff; padding:0; }
       .toolbar, table, #info-semaine, h1 { display:none !important; }
-      .planning{ box-shadow:none; border:none; }
-      .planning header{ border:none; }
+      .planning{ margin:0; box-shadow:none; }
+      .weekly-grid{ border:none; }
+      .wg-cell{ background:#fff; }
     }
   </style>
 </head>
@@ -62,6 +89,7 @@
 
   <p id="info-semaine">Chargement...</p>
 
+  <!-- Tableau d’édition -->
   <table id="tableau">
     <thead>
       <tr>
@@ -77,10 +105,13 @@
     <tbody></tbody>
   </table>
 
-  <!-- Planning validé (vue compacte, imprimable) -->
-  <section class="planning" id="planning">
-    <header id="planning-title">Planning validé — Semaine</header>
-    <div class="grid" id="planning-grid">
+  <!-- Planning validé en grille -->
+  <section class="planning">
+    <div class="heading">
+      <h2 id="planning-title">Planning validé — Semaine</h2>
+      <small style="color:#6b5b7a">Imprime pour une version propre (Ctrl/Cmd + P)</small>
+    </div>
+    <div class="weekly-grid" id="planning-grid">
       <!-- rempli en JS -->
     </div>
   </section>
@@ -95,12 +126,7 @@
     function addDays(d,n){ const x=new Date(d); x.setDate(d.getDate()+n); return x; }
     function addWeeks(d,n){ return addDays(d,7*n); }
     function labelSemaine(mon){ const ven=new Date(mon); ven.setDate(mon.getDate()+4); return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`; }
-
-    /* -------- Normalisation noms -------- */
-    function normalizeKey(name){
-      return name.trim().replace(/\s+/g,' ').toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    }
+    function normalizeKey(name){ return name.trim().replace(/\s+/g,' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
     /* -------- Storage -------- */
     const LS_KEY = "disponibilites_local";
@@ -128,16 +154,15 @@
     }
 
     /* -------- Navigation -------- */
-    document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); chargerTableau(); });
-    document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); chargerTableau(); });
-    document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); chargerTableau(); });
+    document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
+    document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
+    document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
 
     /* -------- Calculs -------- */
     function calculHeure(debut, fin) {
       if (!debut || !fin || debut==="--"||fin==="--") return 0;
       return hhmmToMin(fin) - hhmmToMin(debut);
     }
-
     function createSelects(debut, fin, userKey, jour) {
       const opts = heures.map(h => `<option value="${h}" ${h===debut?'selected':''}>${h}</option>`).join('');
       const opts2= heures.map(h => `<option value="${h}" ${h===fin  ?'selected':''}>${h}</option>`).join('');
@@ -173,16 +198,15 @@
       if (!rec.jours[jour]) rec.jours[jour] = { statut:"en-attente" };
       rec.jours[jour][type] = value;
       writeAll(all);
-      chargerTableau();
+      renderAll();
     }
-
     function valider(userKey, jour){
       const all = readAll();
       const rec = all?.[currentWeekKey]?.[userKey];
       if (!rec) return;
       if (!rec.jours?.[jour]) rec.jours[jour] = {};
       rec.jours[jour].statut = "validé";
-      writeAll(all); chargerTableau();
+      writeAll(all); renderAll();
     }
     function refuser(userKey, jour){
       const all = readAll();
@@ -190,31 +214,31 @@
       if (!rec) return;
       if (!rec.jours?.[jour]) rec.jours[jour] = {};
       rec.jours[jour].statut = "refusé";
-      writeAll(all); chargerTableau();
+      writeAll(all); renderAll();
     }
 
-    /* -------- Rendu principal + planning -------- */
-    function chargerTableau(){
-      tbody.innerHTML = "";
+    /* -------- Rendu principal + planning grille -------- */
+    function renderAll(){
       refreshInfo();
 
       const all = readAll();
       const semaine = all[currentWeekKey] || {};
-      const lignes = {};
 
+      // === 1) Tableau d'édition
+      tbody.innerHTML = "";
+      const lignes = {};
       Object.keys(semaine).forEach(key=>{
         const rec = semaine[key];
         const prenom = (rec.prenom||key).trim();
         if (!lignes[prenom]) lignes[prenom] = { key, jours: rec.jours||{} };
       });
-
       const prenomsTries = Object.keys(lignes).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
+
       for (const prenom of prenomsTries){
         const obj = lignes[prenom];
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${prenom}</td>`;
         let totalValide = 0;
-
         for (const jour of jours){
           const hj = obj.jours?.[jour];
           const td = document.createElement("td");
@@ -244,33 +268,51 @@
         tbody.appendChild(tr);
       }
 
-      // ---- Planning validé (vue compacte)
-      // Regrouper par jour uniquement les créneaux validés, triés par début
-      const planning = { Lundi:[],Mardi:[],Mercredi:[],Jeudi:[],Vendredi:[] };
-      Object.keys(semaine).forEach(key=>{
-        const { prenom, jours:jj } = semaine[key];
-        for (const j of Object.keys(planning)){
+      // === 2) Planning en grille (validés uniquement)
+      // Header de la grille (Jours + dates)
+      const dates = jours.map((_,i)=> {
+        const d = addDays(currentMonday, i);
+        return `${d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })}`;
+      });
+
+      // Rows = prénoms en ordre alpha
+      const rows = prenomsTries;
+
+      // Map (row x col) → pill si validé
+      const getCellContent = (prenom) => {
+        const { key, jours:jj } = lignes[prenom] || {};
+        return jours.map(j=>{
           const h = jj?.[j];
           if (h?.statut === "validé" && h.debut && h.fin){
-            planning[j].push({ prenom, debut:h.debut, fin:h.fin, start:hhmmToMin(h.debut) });
+            return `<span class="pill">${h.debut}–${h.fin}</span>`;
           }
-        }
-      });
-      for (const j of Object.keys(planning)){
-        planning[j].sort((a,b)=>a.start-b.start || a.prenom.localeCompare(b.prenom,'fr',{sensitivity:'base'}));
+          return `<span class="empty"></span>`;
+        });
+      };
+
+      // Build DOM
+      let gridHTML = '';
+      // Header row
+      gridHTML += `<div class="wg-row header">
+        <div class="wg-cell">Personnel</div>
+        ${jours.map((j,idx)=>`<div class="wg-cell">${j}<br><small>${dates[idx]}</small></div>`).join('')}
+      </div>`;
+
+      // Data rows
+      for (const prenom of rows){
+        const cells = getCellContent(prenom);
+        gridHTML += `<div class="wg-row">
+          <div class="wg-cell">${prenom}</div>
+          ${cells.map(c=>`<div class="wg-cell">${c}</div>`).join('')}
+        </div>`;
       }
 
-      planningGrid.innerHTML = "";
-      for (const j of ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"]){
-        const dayEl = document.createElement("div");
-        dayEl.className = "day";
-        dayEl.innerHTML = `<h3>${j}</h3><div class="slots">${
-          planning[j].length
-            ? planning[j].map(x=>`<span class="slot">${x.prenom} — ${x.debut}–${x.fin}</span>`).join("")
-            : `<em>Aucun créneau validé</em>`
-        }</div>`;
-        planningGrid.appendChild(dayEl);
+      // Si aucune ligne → quand même afficher skeleton
+      if (rows.length === 0){
+        gridHTML += `<div class="wg-row"><div class="wg-cell">—</div>${jours.map(()=>`<div class="wg-cell empty">Aucune donnée</div>`).join('')}</div>`;
       }
+
+      planningGrid.innerHTML = gridHTML;
     }
 
     /* -------- Vider semaine -------- */
@@ -280,13 +322,13 @@
         if (confirm("Supprimer toutes les données de cette semaine (local) ?")) {
           delete all[currentWeekKey];
           writeAll(all);
-          chargerTableau();
+          renderAll();
         }
       } else alert("Aucune donnée locale pour cette semaine.");
     });
 
     // init
-    chargerTableau();
+    renderAll();
   </script>
 </body>
 </html>
