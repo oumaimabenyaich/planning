@@ -78,7 +78,7 @@
   </style>
 </head>
 <body>
-  <h1>Tableau Admin - Edition des Horaires</h1>
+  <h1>Edition des Horaires</h1>
 
   <div class="toolbar">
     <button id="prevWeek">⟵ Semaine précédente</button>
@@ -108,7 +108,7 @@
   <!-- Planning validé en grille -->
   <section class="planning">
     <div class="heading">
-      <h2 id="planning-title">Planning validé — Semaine</h2>
+      <h2 id="planning-title">Planning — Semaine</h2>
       <small style="color:#6b5b7a">Imprime pour une version propre (Ctrl/Cmd + P)</small>
     </div>
     <div class="weekly-grid" id="planning-grid">
@@ -319,12 +319,12 @@
     document.getElementById("viderSemaine").addEventListener("click", ()=>{
       const all = readAll();
       if (all[currentWeekKey]) {
-        if (confirm("Supprimer toutes les données de cette semaine (local) ?")) {
+        if (confirm("Supprimer toutes les données de cette semaine ?")) {
           delete all[currentWeekKey];
           writeAll(all);
           renderAll();
         }
-      } else alert("Aucune donnée locale pour cette semaine.");
+      } else alert("Aucune donnée pour cette semaine.");
     });
 
     // init
