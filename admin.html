@@ -2,161 +2,291 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin - Gestion des Horaires</title>
+  <title>Vue Admin - Edition des horaires (Local)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body{font-family:Arial,sans-serif;padding:2rem;background:#faf7f9;color:#333;}
-    h1{text-align:center;color:#6a1b9a;margin-bottom:.25rem;}
-    #info-semaine{text-align:center;margin-bottom:1rem;color:#544a5d;}
-    .toolbar{display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;}
-    .toolbar button{padding:.5rem .9rem;border-radius:999px;border:1px solid #d81b60;background:#d81b60;color:#fff;cursor:pointer;}
-    .toolbar button:hover{background:#a31447;}
-    table{width:100%;border-collapse:collapse;background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.08);border:1px solid #e9d7e5;}
-    th,td{border:1px solid #e9d7e5;padding:.75rem;text-align:center;}
-    th{background:#f3e3ee;color:#3c2a52;}
-    select{padding:.45rem;border-radius:10px;border:1px solid #e9d7e5;}
-    .statut{display:inline-block;padding:.25rem .5rem;border-radius:999px;font-size:.8rem;font-weight:bold;margin-top:.25rem;}
-    .validé{background:#2e7d32;color:#fff;}
-    .en-attente{background:#ffd54f;color:#4e3b00;}
-    .refusé{background:#c62828;color:#fff;}
-    .action-btn{font-size:.8rem;margin:.2rem;padding:.35rem .6rem;border:none;border-radius:999px;cursor:pointer;color:#fff}
-    .valider-btn{background:#2e7d32;}
-    .refuser-btn{background:#c62828;}
-    .total{font-weight:bold;}
-    /* Planning grille */
-    .planning{margin-top:2rem;}
-    .wg-row{display:grid;grid-template-columns:180px repeat(5,1fr);}
-    .wg-row.header{background:#f3e3ee;font-weight:bold;color:#3c2a52;}
-    .wg-cell{border:1px solid #eadff0;padding:.6rem;min-height:46px;background:#faf8fc;display:flex;align-items:center;justify-content:center;}
-    .wg-row .wg-cell:first-child{background:#fff;justify-content:flex-start;padding-left:.8rem;}
-    .pill{background:#c8e6c9;border:1px solid #81c784;padding:.25rem .55rem;border-radius:8px;font-weight:600;color:#1b5e20;white-space:nowrap;}
-    .empty{color:#8b7f92;font-style:italic;}
-    @media print{ .toolbar, table, h1, #info-semaine {display:none!important;} body{padding:0;} }
+    :root{
+      --bg:#faf7f9; --text:#2b2a2a; --primary:#d81b60; --primary-dark:#a31447;
+      --accent:#6a1b9a; --line:#e9d7e5; --card:#ffffff;
+      --badge-yellow:#ffd54f; --badge-green:#2e7d32; --badge-red:#c62828;
+    }
+    body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: 2rem; }
+    h1, #info-semaine { text-align: center; }
+    h1 { color:var(--accent); }
+    .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 1rem; }
+    .toolbar button {
+      padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
+      box-shadow: 0 4px 12px rgba(216,27,96,.15);
+    }
+    .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
+    table { width: 100%; border-collapse: collapse; background: var(--card); margin-top: 1rem; border:1px solid var(--line); box-shadow: 0 10px 30px rgba(106,27,154,.08); }
+    th, td { padding: 1rem; border: 1px solid var(--line); text-align: center; }
+    th { background: #f3e3ee; color: #3c2a52; }
+    select { margin: 0.3rem 0.2rem; padding: 0.6rem; border-radius:10px; border:1px solid var(--line); }
+    .statut { display: inline-block; padding: 0.35rem 0.65rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; }
+    .validé { background-color: var(--badge-green); color: white; }
+    .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
+    .refusé { background-color: var(--badge-red); color: white; }
+    .action-btn { font-size: 0.75rem; margin: 0.2rem; padding: 0.35rem 0.6rem; border: none; border-radius: 999px; cursor: pointer; }
+    .valider-btn { background-color: var(--badge-green); color: white; }
+    .refuser-btn { background-color: var(--badge-red); color: white; }
+    .total { font-weight: bold; }
+    .horaire-group { display: flex; justify-content: center; align-items: center; gap: 0.25rem; margin-bottom: 0.5rem; }
+    /* Planning validé */
+    .planning { margin-top:2rem; background:var(--card); border:1px solid var(--line); border-radius:14px; box-shadow: 0 10px 30px rgba(106,27,154,.08); }
+    .planning header { padding:1rem 1.25rem; border-bottom:1px solid var(--line); color:var(--accent); font-weight:bold; }
+    .planning .grid { display:grid; grid-template-columns: 120px 1fr; }
+    .planning .day { border-top:1px solid var(--line); padding: .85rem 1.25rem; display:flex; gap:1rem; }
+    .planning .day:first-child { border-top:none; }
+    .planning .day h3 { width:120px; margin:0; color:#3c2a52; }
+    .planning .slots { display:flex; flex-wrap:wrap; gap:.5rem; }
+    .planning .slot { background:#f7eef5; border:1px solid #eed5ea; padding:.35rem .6rem; border-radius:999px; }
+    /* Impression : n'imprimer que le planning */
+    @media print{
+      body{ background:#fff; padding:0; }
+      .toolbar, table, #info-semaine, h1 { display:none !important; }
+      .planning{ box-shadow:none; border:none; }
+      .planning header{ border:none; }
+    }
   </style>
 </head>
 <body>
-  <h1>Tableau Admin</h1>
+  <h1>Tableau Admin - Edition des Horaires</h1>
+
   <div class="toolbar">
     <button id="prevWeek">⟵ Semaine précédente</button>
     <button id="thisWeek">Cette semaine</button>
     <button id="nextWeek">Semaine suivante ⟶</button>
+    <button id="viderSemaine">Vider cette semaine (local)</button>
   </div>
-  <p id="info-semaine">📅</p>
+
+  <p id="info-semaine">Chargement...</p>
 
   <table id="tableau">
     <thead>
-      <tr><th>Prénom</th><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th><th>Total validé</th></tr>
+      <tr>
+        <th>Prénom</th>
+        <th>Lundi</th>
+        <th>Mardi</th>
+        <th>Mercredi</th>
+        <th>Jeudi</th>
+        <th>Vendredi</th>
+        <th>Total validé</th>
+      </tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <section class="planning">
-    <h2 style="color:#6a1b9a;margin-bottom:.5rem;">Planning validé</h2>
-    <div id="planning-grid"></div>
+  <!-- Planning validé (vue compacte, imprimable) -->
+  <section class="planning" id="planning">
+    <header id="planning-title">Planning validé — Semaine</header>
+    <div class="grid" id="planning-grid">
+      <!-- rempli en JS -->
+    </div>
   </section>
 
-  <script type="module">
-    import { db, initAuth } from './firebase.js';
-    import { collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <script>
+    /* -------- Helpers -------- */
+    const pad = n => String(n).padStart(2,'0');
+    const hhmmToMin = s => { const [h,m]=s.split(":").map(Number); return h*60+m; };
+    const toHM = mins => `${Math.floor(mins/60)} h${mins%60 ? " " + pad(mins%60) : ""}`.replace(" 00","");
+    function mondayOf(date){ const d = new Date(date); d.setHours(0,0,0,0); const day = d.getDay(); const diff = (day===0?-6:1-day); d.setDate(d.getDate()+diff); return d; }
+    function weekKeyFromMonday(mon){ return `${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`; }
+    function addDays(d,n){ const x=new Date(d); x.setDate(d.getDate()+n); return x; }
+    function addWeeks(d,n){ return addDays(d,7*n); }
+    function labelSemaine(mon){ const ven=new Date(mon); ven.setDate(mon.getDate()+4); return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`; }
 
-    await initAuth;
+    /* -------- Normalisation noms -------- */
+    function normalizeKey(name){
+      return name.trim().replace(/\s+/g,' ').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    }
 
-    const jours=["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
-    const heures=["--"]; for(let h=10;h<=13;h++){for(let m of [0,15,30,45]){if(h===13&&m>30)break;heures.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`)}}
+    /* -------- Storage -------- */
+    const LS_KEY = "disponibilites_local";
+    const readAll = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)||"{}"); } catch { return {}; } };
+    const writeAll = (obj) => localStorage.setItem(LS_KEY, JSON.stringify(obj));
 
-    // dates / semaine
-    function mondayOf(d){const x=new Date(d);x.setHours(0,0,0,0);const day=x.getDay();const diff=(day===0?-6:1-day);x.setDate(x.getDate()+diff);return x;}
-    function addWeeks(d,n){const x=new Date(d);x.setDate(x.getDate()+7*n);return x;}
-    function weekKeyFromMonday(mon){return `${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,'0')}-${String(mon.getDate()).padStart(2,'0')}`;}
-    function labelSemaine(mon){const ven=new Date(mon);ven.setDate(mon.getDate()+4);return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`;}
-    const pad=n=>String(n).padStart(2,'0'); const hhmmToMin=s=>{const [h,m]=s.split(":").map(Number);return h*60+m;}; const toHM=m=>`${Math.floor(m/60)} h${m%60?(" "+pad(m%60)):""}`.replace(" 00","");
+    /* -------- UI refs -------- */
+    const infoSemaine = document.getElementById("info-semaine");
+    const tbody = document.querySelector("#tableau tbody");
+    const planningTitle = document.getElementById("planning-title");
+    const planningGrid = document.getElementById("planning-grid");
 
-    let currentMonday=mondayOf(new Date());
-    let currentWeekKey=weekKeyFromMonday(currentMonday);
-    const info=document.getElementById("info-semaine");
-    const tbody=document.querySelector("#tableau tbody");
-    const planningGrid=document.getElementById("planning-grid");
+    /* -------- Semaine courante -------- */
+    let currentMonday = mondayOf(new Date());
+    let currentWeekKey = weekKeyFromMonday(currentMonday);
 
-    document.getElementById("prevWeek").onclick=()=>{currentMonday=addWeeks(currentMonday,-1);currentWeekKey=weekKeyFromMonday(currentMonday);renderAll();};
-    document.getElementById("nextWeek").onclick=()=>{currentMonday=addWeeks(currentMonday, 1);currentWeekKey=weekKeyFromMonday(currentMonday);renderAll();};
-    document.getElementById("thisWeek").onclick=()=>{currentMonday=mondayOf(new Date());currentWeekKey=weekKeyFromMonday(currentMonday);renderAll();};
+    const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
+    const heures = ["--"];
+    for (let h=10; h<=13; h++){ for (let m of [0,15,30,45]){ if (h===13 && m>30) break; heures.push(`${pad(h)}:${pad(m)}`); } }
 
-    function calculHeure(d,f){ if(!d||!f||d==="--"||f==="--") return 0; return hhmmToMin(f)-hhmmToMin(d); }
-    function selectHTML(value){ return heures.map(h=>`<option value="${h}" ${h===value?'selected':''}>${h}</option>`).join(''); }
+    function refreshInfo(){
+      infoSemaine.textContent = labelSemaine(currentMonday);
+      const ven = addDays(currentMonday,4);
+      planningTitle.textContent = `Planning validé — du ${currentMonday.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`;
+    }
 
-    // délégation événements
-    tbody.addEventListener("change", async (e)=>{
-      const sel=e.target;
-      if(!sel.matches("select[data-role]")) return;
-      const role=sel.dataset.role, key=sel.dataset.user, jour=sel.dataset.jour;
-      const ref=doc(db,"disponibilites",currentWeekKey,"users",key);
-      const snap=await getDoc(ref); if(!snap.exists()) return;
-      const data=snap.data(); const j= data[jour] || { statut:"en-attente" };
-      j[role]=sel.value; data[jour]=j;
-      await updateDoc(ref,{ [jour]: j, updatedAt: Date.now() });
-      renderAll();
+    /* -------- Navigation -------- */
+    document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); chargerTableau(); });
+    document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); chargerTableau(); });
+    document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); chargerTableau(); });
+
+    /* -------- Calculs -------- */
+    function calculHeure(debut, fin) {
+      if (!debut || !fin || debut==="--"||fin==="--") return 0;
+      return hhmmToMin(fin) - hhmmToMin(debut);
+    }
+
+    function createSelects(debut, fin, userKey, jour) {
+      const opts = heures.map(h => `<option value="${h}" ${h===debut?'selected':''}>${h}</option>`).join('');
+      const opts2= heures.map(h => `<option value="${h}" ${h===fin  ?'selected':''}>${h}</option>`).join('');
+      return `
+        <div class="horaire-group">
+          <select data-role="debut" data-user="${userKey}" data-jour="${jour}">${opts}</select>
+          <select data-role="fin"   data-user="${userKey}" data-jour="${jour}">${opts2}</select>
+        </div>`;
+    }
+
+    /* -------- Délégation d'événements -------- */
+    tbody.addEventListener("change", (e)=>{
+      const sel = e.target;
+      if (sel.matches("select[data-role]")){
+        const role = sel.getAttribute("data-role");
+        const userKey = sel.getAttribute("data-user");
+        const jour = sel.getAttribute("data-jour");
+        updateHeure(userKey, jour, role, sel.value);
+      }
+    });
+    tbody.addEventListener("click", (e)=>{
+      const vb = e.target.closest(".valider-btn");
+      const rb = e.target.closest(".refuser-btn");
+      if (vb){ valider(vb.dataset.user, vb.dataset.jour); }
+      if (rb){ refuser(rb.dataset.user, rb.dataset.jour); }
     });
 
-    tbody.addEventListener("click", async (e)=>{
-      const vb=e.target.closest(".valider-btn"); const rb=e.target.closest(".refuser-btn");
-      if(!vb && !rb) return;
-      const key=(vb||rb).dataset.user; const jour=(vb||rb).dataset.jour;
-      const ref=doc(db,"disponibilites",currentWeekKey,"users",key);
-      const snap=await getDoc(ref); if(!snap.exists()) return;
-      const j = snap.data()[jour] || {};
-      j.statut = vb ? "validé" : "refusé";
-      await updateDoc(ref,{ [jour]: j, updatedAt: Date.now() });
-      renderAll();
-    });
+    function updateHeure(userKey, jour, type, value){
+      const all = readAll();
+      const rec = all?.[currentWeekKey]?.[userKey];
+      if (!rec) return;
+      if (!rec.jours) rec.jours={};
+      if (!rec.jours[jour]) rec.jours[jour] = { statut:"en-attente" };
+      rec.jours[jour][type] = value;
+      writeAll(all);
+      chargerTableau();
+    }
 
-    async function renderAll(){
-      info.textContent = labelSemaine(currentMonday);
-      tbody.innerHTML="";
+    function valider(userKey, jour){
+      const all = readAll();
+      const rec = all?.[currentWeekKey]?.[userKey];
+      if (!rec) return;
+      if (!rec.jours?.[jour]) rec.jours[jour] = {};
+      rec.jours[jour].statut = "validé";
+      writeAll(all); chargerTableau();
+    }
+    function refuser(userKey, jour){
+      const all = readAll();
+      const rec = all?.[currentWeekKey]?.[userKey];
+      if (!rec) return;
+      if (!rec.jours?.[jour]) rec.jours[jour] = {};
+      rec.jours[jour].statut = "refusé";
+      writeAll(all); chargerTableau();
+    }
 
-      const col=collection(db,"disponibilites",currentWeekKey,"users");
-      const snap=await getDocs(col);
-      const entries=[]; snap.forEach(d=>entries.push({ id:d.id, ...d.data() }));
-      entries.sort((a,b)=> (a.prenom||a.id).localeCompare(b.prenom||b.id,'fr',{sensitivity:'base'}));
+    /* -------- Rendu principal + planning -------- */
+    function chargerTableau(){
+      tbody.innerHTML = "";
+      refreshInfo();
 
-      for(const rec of entries){
-        let total=0;
-        const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${rec.prenom||rec.id}</td>`;
-        for(const j of jours){
-          const h=rec[j];
-          const cell=document.createElement("td");
-          const debut=h?.debut||"--", fin=h?.fin||"--", statut=h?.statut||"en-attente";
-          if (statut==="validé") total += calculHeure(debut,fin);
-          cell.innerHTML = `
-            <div>
-              <select data-role="debut" data-user="${rec.id}" data-jour="${j}">${selectHTML(debut)}</select>
-              <select data-role="fin" data-user="${rec.id}" data-jour="${j}">${selectHTML(fin)}</select>
-            </div>
-            <div class="statut ${statut}">${statut}</div>
-            <button class="action-btn valider-btn" data-user="${rec.id}" data-jour="${j}">Valider</button>
-            <button class="action-btn refuser-btn" data-user="${rec.id}" data-jour="${j}">Refuser</button>
-          `;
-          tr.appendChild(cell);
+      const all = readAll();
+      const semaine = all[currentWeekKey] || {};
+      const lignes = {};
+
+      Object.keys(semaine).forEach(key=>{
+        const rec = semaine[key];
+        const prenom = (rec.prenom||key).trim();
+        if (!lignes[prenom]) lignes[prenom] = { key, jours: rec.jours||{} };
+      });
+
+      const prenomsTries = Object.keys(lignes).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
+      for (const prenom of prenomsTries){
+        const obj = lignes[prenom];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${prenom}</td>`;
+        let totalValide = 0;
+
+        for (const jour of jours){
+          const hj = obj.jours?.[jour];
+          const td = document.createElement("td");
+          if (hj && hj.debut && hj.fin){
+            const statut = hj.statut || "en-attente";
+            if (statut === "validé"){
+              const d = calculHeure(hj.debut, hj.fin);
+              if (d>0) totalValide += d;
+            }
+            td.innerHTML = `
+              ${createSelects(hj.debut, hj.fin, obj.key, jour)}
+              <div class="statut ${statut}">${statut}</div>
+              <button class='action-btn valider-btn' data-user="${obj.key}" data-jour="${jour}">Valider</button>
+              <button class='action-btn refuser-btn' data-user="${obj.key}" data-jour="${jour}">Refuser</button>
+            `;
+          } else {
+            td.innerHTML = `
+              ${createSelects("--", "--", obj.key, jour)}
+              <div class="statut en-attente">en-attente</div>
+              <button class='action-btn valider-btn' data-user="${obj.key}" data-jour="${jour}">Valider</button>
+              <button class='action-btn refuser-btn' data-user="${obj.key}" data-jour="${jour}">Refuser</button>
+            `;
+          }
+          tr.appendChild(td);
         }
-        tr.innerHTML += `<td class="total">${toHM(total)}</td>`;
+        tr.innerHTML += `<td class="total">${toHM(totalValide)}</td>`;
         tbody.appendChild(tr);
       }
 
-      // planning validé (grille)
-      let gridHTML = `<div class="wg-row header"><div class="wg-cell">Nom</div>${jours.map(j=>`<div class="wg-cell">${j}</div>`).join('')}</div>`;
-      for(const rec of entries){
-        gridHTML += `<div class="wg-row"><div class="wg-cell">${rec.prenom||rec.id}</div>${
-          jours.map(j=>{
-            const h=rec[j];
-            if(h?.statut==="validé" && h.debut && h.fin) return `<div class="wg-cell"><span class="pill">${h.debut}–${h.fin}</span></div>`;
-            return `<div class="wg-cell"><span class="empty"></span></div>`;
-          }).join('')
-        }</div>`;
+      // ---- Planning validé (vue compacte)
+      // Regrouper par jour uniquement les créneaux validés, triés par début
+      const planning = { Lundi:[],Mardi:[],Mercredi:[],Jeudi:[],Vendredi:[] };
+      Object.keys(semaine).forEach(key=>{
+        const { prenom, jours:jj } = semaine[key];
+        for (const j of Object.keys(planning)){
+          const h = jj?.[j];
+          if (h?.statut === "validé" && h.debut && h.fin){
+            planning[j].push({ prenom, debut:h.debut, fin:h.fin, start:hhmmToMin(h.debut) });
+          }
+        }
+      });
+      for (const j of Object.keys(planning)){
+        planning[j].sort((a,b)=>a.start-b.start || a.prenom.localeCompare(b.prenom,'fr',{sensitivity:'base'}));
       }
-      planningGrid.innerHTML = gridHTML;
+
+      planningGrid.innerHTML = "";
+      for (const j of ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"]){
+        const dayEl = document.createElement("div");
+        dayEl.className = "day";
+        dayEl.innerHTML = `<h3>${j}</h3><div class="slots">${
+          planning[j].length
+            ? planning[j].map(x=>`<span class="slot">${x.prenom} — ${x.debut}–${x.fin}</span>`).join("")
+            : `<em>Aucun créneau validé</em>`
+        }</div>`;
+        planningGrid.appendChild(dayEl);
+      }
     }
 
-    renderAll();
+    /* -------- Vider semaine -------- */
+    document.getElementById("viderSemaine").addEventListener("click", ()=>{
+      const all = readAll();
+      if (all[currentWeekKey]) {
+        if (confirm("Supprimer toutes les données de cette semaine (local) ?")) {
+          delete all[currentWeekKey];
+          writeAll(all);
+          chargerTableau();
+        }
+      } else alert("Aucune donnée locale pour cette semaine.");
+    });
+
+    // init
+    chargerTableau();
   </script>
 </body>
 </html>
