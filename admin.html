@@ -1,334 +1,204 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Vue Admin - Edition des horaires (Local)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    :root{
-      --bg:#faf7f9; --text:#2b2a2a; --primary:#d81b60; --primary-dark:#a31447;
-      --accent:#6a1b9a; --line:#e9d7e5; --card:#ffffff;
-      --badge-yellow:#ffd54f; --badge-green:#2e7d32; --badge-red:#c62828;
-      --valid-bg:#c8e6c9;      /* vert doux */
-      --valid-border:#81c784;
-      --cell-bg:#faf8fc;       /* fond cellule léger */
-      --cell-border:#eadff0;
-      --col-head:#f3e3ee;
-    }
-    body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: 2rem; }
-    h1 { text-align: center; color:var(--accent); margin-bottom:.25rem; }
-    #info-semaine { text-align:center; margin-bottom:1rem; color:#544a5d; }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Horaires — Ultra compact</title>
+<style>
+  :root{
+    --bg:#fff; --text:#1f1f1f; --line:#ece7ee; --head:#f6eff8; --primary:#d81b60;
+    --ok:#16a34a; --warn:#eab308; --no:#dc2626;
+    --fs:13px; --fs-s:12px; --fs-xs:11px;
+    --w-name:78px; --w-day:56px; --w-total:48px;
+  }
+  html,body{height:100%}
+  body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text); font-size:var(--fs); -webkit-font-smoothing:antialiased}
+  header{position:sticky; top:0; z-index:10; background:#fffccfff; background:#fff; border-bottom:1px solid var(--line)}
+  .bar{display:flex; gap:.4rem; align-items:center; justify-content:center; padding:.5rem}
+  .bar button{padding:.28rem .5rem; border-radius:999px; border:1px solid var(--primary); background:var(--primary); color:#fff; font-size:var(--fs-s)}
+  h1{margin:.2rem 0 .4rem; text-align:center; font-size:16px; color:#6a1b9a}
+  #info{margin:0 0 .6rem; text-align:center; color:#6b5b7a; font-size:var(--fs-s)}
 
-    .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 1rem; }
-    .toolbar button {
-      padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
-      box-shadow: 0 4px 12px rgba(216,27,96,.15);
-    }
-    .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
+  table{width:100%; border-collapse:collapse; table-layout:fixed}
+  th,td{border:1px solid var(--line); padding:.32rem; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  th{background:var(--head); font-weight:700; font-size:var(--fs-s); color:#3b2b51}
+  td{font-size:var(--fs-s)}
+  th:first-child,td:first-child{width:var(--w-name)}
+  th:last-child,td:last-child{width:var(--w-total)}
+  th:not(:first-child):not(:last-child), td:not(:first-child):not(:last-child){width:var(--w-day)}
 
-    /* Tableau d'édition (inchangé) */
-    table { width: 100%; border-collapse: collapse; background: var(--card); margin-top: 1rem; border:1px solid var(--line); box-shadow: 0 10px 30px rgba(106,27,154,.08); }
-    th, td { padding: 1rem; border: 1px solid var(--line); text-align: center; }
-    th { background: var(--col-head); color: #3c2a52; }
-    select { margin: 0.3rem 0.2rem; padding: 0.6rem; border-radius:10px; border:1px solid var(--line); background:#fff; }
-    .statut { display: inline-block; padding: 0.35rem 0.65rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; }
-    .validé { background-color: var(--badge-green); color: white; }
-    .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
-    .refusé { background-color: var(--badge-red); color: white; }
-    .action-btn { font-size: 0.75rem; margin: 0.2rem; padding: 0.35rem 0.6rem; border: none; border-radius: 999px; cursor: pointer; }
-    .valider-btn { background-color: var(--badge-green); color: white; }
-    .refuser-btn { background-color: var(--badge-red); color: white; }
-    .total { font-weight: bold; }
-    .horaire-group { display: flex; justify-content: center; align-items: center; gap: 0.25rem; margin-bottom: 0.5rem; }
-
-    /* ========= Planning de la semaine (grille) ========= */
-    .planning { margin-top:2rem; }
-    .planning .heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
-    .planning h2 { margin:0; color:var(--accent); font-size:1.15rem; }
-
-    .weekly-grid {
-      width:100%;
-      border:1px solid var(--cell-border);
-      border-radius:12px;
-      overflow:hidden;
-      background:var(--card);
-      box-shadow: 0 10px 30px rgba(106,27,154,.08);
-    }
-    .wg-row { display:grid; grid-template-columns: 180px repeat(5, 1fr); }
-    .wg-row.header { background:var(--col-head); font-weight:bold; color:#3c2a52; }
-    .wg-cell { border-top:1px solid var(--cell-border); border-right:1px solid var(--cell-border); padding:.6rem .7rem; background:var(--cell-bg); min-height:48px; display:flex; align-items:center; gap:.35rem; }
-    .wg-row .wg-cell:first-child { background:#fff; font-weight:bold; color:#3c2a52; }
-    .wg-row .wg-cell:last-child { border-right:none; }
-    .pill {
-      display:inline-flex; align-items:center; gap:.4rem;
-      background:var(--valid-bg); border:1px solid var(--valid-border);
-      padding:.28rem .55rem; border-radius:8px; font-weight:600; color:#1b5e20; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
-      white-space:nowrap;
-    }
-    .empty { color:#8b7f92; font-style:italic; }
-
-    /* Impression : n'imprimer que la grille */
-    @media print{
-      body{ background:#fff; padding:0; }
-      .toolbar, table, #info-semaine, h1 { display:none !important; }
-      .planning{ margin:0; box-shadow:none; }
-      .weekly-grid{ border:none; }
-      .wg-cell{ background:#fff; }
-    }
-  </style>
+  .range{width:100%; padding:.2rem; font-size:var(--fs-xs); border:1px solid var(--line); border-radius:8px; background:#fff}
+  .cell{display:grid; gap:.18rem}
+  .badge{display:inline-block; padding:.08rem .35rem; border-radius:999px; font-size:10px; font-weight:700; border:1px solid transparent; cursor:pointer; user-select:none}
+  .b-wait{background:#fff7cc; color:#5b4600; border-color:#f3e48a}
+  .b-ok{background:#dbf7df; color:#0e5f1c; border-color:#a8e1b1}
+  .b-no{background:#ffe1e1; color:#7b1212; border-color:#ffbaba}
+  .total{font-weight:700}
+  .hint{padding:.7rem; text-align:center; color:#7a6b87}
+  .mini{font-size:10px; color:#8c7a99}
+</style>
 </head>
 <body>
-  <h1>Edition des Horaires</h1>
 
-  <div class="toolbar">
-    <button id="prevWeek">⟵ Semaine précédente</button>
-    <button id="thisWeek">Cette semaine</button>
-    <button id="nextWeek">Semaine suivante ⟶</button>
-    <button id="viderSemaine">Vider cette semaine (local)</button>
+<header>
+  <h1>Edition des horaires (compact)</h1>
+  <div class="bar">
+    <button id="prev">⟵</button>
+    <button id="today">Cette semaine</button>
+    <button id="next">⟶</button>
+    <button id="clear">Vider</button>
   </div>
+</header>
 
-  <p id="info-semaine">Chargement...</p>
+<p id="info" class="mini">Chargement…</p>
 
-  <!-- Tableau d’édition -->
-  <table id="tableau">
-    <thead>
-      <tr>
-        <th>Prénom</th>
-        <th>Lundi</th>
-        <th>Mardi</th>
-        <th>Mercredi</th>
-        <th>Jeudi</th>
-        <th>Vendredi</th>
-        <th>Total validé</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<table id="tbl">
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th>
+      <th>Tot</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <!-- Planning validé en grille -->
-  <section class="planning">
-    <div class="heading">
-      <h2 id="planning-title">Planning — Semaine</h2>
-      <small style="color:#6b5b7a">Imprime pour une version propre (Ctrl/Cmd + P)</small>
-    </div>
-    <div class="weekly-grid" id="planning-grid">
-      <!-- rempli en JS -->
-    </div>
-  </section>
+<p id="empty" class="hint" style="display:none">Aucune donnée cette semaine.</p>
 
-  <script>
-    /* -------- Helpers -------- */
-    const pad = n => String(n).padStart(2,'0');
-    const hhmmToMin = s => { const [h,m]=s.split(":").map(Number); return h*60+m; };
-    const toHM = mins => `${Math.floor(mins/60)} h${mins%60 ? " " + pad(mins%60) : ""}`.replace(" 00","");
-    function mondayOf(date){ const d = new Date(date); d.setHours(0,0,0,0); const day = d.getDay(); const diff = (day===0?-6:1-day); d.setDate(d.getDate()+diff); return d; }
-    function weekKeyFromMonday(mon){ return `${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`; }
-    function addDays(d,n){ const x=new Date(d); x.setDate(d.getDate()+n); return x; }
-    function addWeeks(d,n){ return addDays(d,7*n); }
-    function labelSemaine(mon){ const ven=new Date(mon); ven.setDate(mon.getDate()+4); return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`; }
-    function normalizeKey(name){ return name.trim().replace(/\s+/g,' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+<script>
+/* ===== Helpers ===== */
+const pad = n => String(n).padStart(2,'0');
+const hhmm = s => {const [h,m]=s.split(':').map(Number); return h*60+m;};
+const dur = (r)=>{ if(!r||r==='--')return 0; const [a,b]=r.split('–'); return hhmm(b)-hhmm(a); };
+const toHM = m => m<=0 ? '0h' : `${Math.floor(m/60)}h${(m%60)?pad(m%60):''}`;
+function mondayOf(d){d=new Date(d); d.setHours(0,0,0,0); const wd=d.getDay(); d.setDate(d.getDate()+(wd===0?-6:1-wd)); return d;}
+function addDays(d,n){const x=new Date(d); x.setDate(d.getDate()+n); return x;}
+function addWeeks(d,n){return addDays(d,7*n);}
+function keyFromMon(m){return `${m.getFullYear()}-${pad(m.getMonth()+1)}-${pad(m.getDate())}`;}
+function labelWeek(m){const v=addDays(m,4); return `du ${m.toLocaleDateString('fr-FR')} au ${v.toLocaleDateString('fr-FR')}`;}
 
-    /* -------- Storage -------- */
-    const LS_KEY = "disponibilites_local";
-    const readAll = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)||"{}"); } catch { return {}; } };
-    const writeAll = (obj) => localStorage.setItem(LS_KEY, JSON.stringify(obj));
+const DAYS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"]; // clés data
+const RANGES = ["--","10:00–12:00","10:00–13:00","10:30–13:00","11:00–13:00","11:00–13:30","12:00–13:30"];
 
-    /* -------- UI refs -------- */
-    const infoSemaine = document.getElementById("info-semaine");
-    const tbody = document.querySelector("#tableau tbody");
-    const planningTitle = document.getElementById("planning-title");
-    const planningGrid = document.getElementById("planning-grid");
+const LS = "dispos_ultra_compact";
+const readAll = ()=>{ try{return JSON.parse(localStorage.getItem(LS)||"{}");}catch{return{}} };
+const writeAll = (o)=>localStorage.setItem(LS, JSON.stringify(o));
 
-    /* -------- Semaine courante -------- */
-    let currentMonday = mondayOf(new Date());
-    let currentWeekKey = weekKeyFromMonday(currentMonday);
+/* ===== State ===== */
+let monday = mondayOf(new Date());
+let weekKey = keyFromMon(monday);
 
-    const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
-    const heures = ["--"];
-    for (let h=10; h<=13; h++){ for (let m of [0,15,30,45]){ if (h===13 && m>30) break; heures.push(`${pad(h)}:${pad(m)}`); } }
+/* ===== UI refs ===== */
+const info = document.getElementById('info');
+const tbody = document.querySelector('#tbl tbody');
+const empty = document.getElementById('empty');
 
-    function refreshInfo(){
-      infoSemaine.textContent = labelSemaine(currentMonday);
-      const ven = addDays(currentMonday,4);
-      planningTitle.textContent = `Planning validé — du ${currentMonday.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`;
-    }
+/* ===== Data shape =====
+data[weekKey][user] = {
+  prenom: "Laura",
+  jours: { "Lundi":{range:"10:00–13:00", statut:"validé"}, ... }
+}
+*/
 
-    /* -------- Navigation -------- */
-    document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
-    document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
-    document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
+/* ===== Seed (optionnel) : décommente pour tester
+let all = readAll();
+all[weekKey] = {
+  laura:{prenom:"Laura",jours:{}},
+  adam:{prenom:"Adam",jours:{}}
+}; writeAll(all);
+*/
 
-    /* -------- Calculs -------- */
-    function calculHeure(debut, fin) {
-      if (!debut || !fin || debut==="--"||fin==="--") return 0;
-      return hhmmToMin(fin) - hhmmToMin(debut);
-    }
-    function createSelects(debut, fin, userKey, jour) {
-      const opts = heures.map(h => `<option value="${h}" ${h===debut?'selected':''}>${h}</option>`).join('');
-      const opts2= heures.map(h => `<option value="${h}" ${h===fin  ?'selected':''}>${h}</option>`).join('');
-      return `
-        <div class="horaire-group">
-          <select data-role="debut" data-user="${userKey}" data-jour="${jour}">${opts}</select>
-          <select data-role="fin"   data-user="${userKey}" data-jour="${jour}">${opts2}</select>
-        </div>`;
-    }
+/* ===== Rendering ===== */
+function refreshInfo(){
+  info.textContent = labelWeek(monday);
+}
 
-    /* -------- Délégation d'événements -------- */
-    tbody.addEventListener("change", (e)=>{
-      const sel = e.target;
-      if (sel.matches("select[data-role]")){
-        const role = sel.getAttribute("data-role");
-        const userKey = sel.getAttribute("data-user");
-        const jour = sel.getAttribute("data-jour");
-        updateHeure(userKey, jour, role, sel.value);
+function cycleStatut(s){
+  if(s==="validé") return "refusé";
+  if(s==="refusé") return "en-attente";
+  return "validé";
+}
+function badgeClass(s){ return s==="validé"?"badge b-ok": s==="refusé"?"badge b-no":"badge b-wait"; }
+
+function render(){
+  refreshInfo();
+  const all = readAll();
+  const week = all[weekKey] || {};
+  const keys = Object.keys(week).sort((a,b)=> (week[a].prenom||a).localeCompare(week[b].prenom||b,'fr',{sensitivity:'base'}));
+  tbody.innerHTML = "";
+  empty.style.display = keys.length? "none":"block";
+
+  for(const k of keys){
+    const rec = week[k]; const name = rec.prenom || k;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="font-weight:700">${name}</td>`;
+    let total=0;
+
+    for(const J of DAYS){
+      const cell = document.createElement('td');
+      const j = rec.jours?.[J] || {};
+      const range = j.range || "--";
+      const statut = j.statut || "en-attente";
+      total += dur(range) && statut==="validé" ? dur(range) : 0;
+
+      const sel = document.createElement('select');
+      sel.className = "range";
+      for(const r of RANGES){
+        const opt = document.createElement('option');
+        opt.value = r; opt.textContent = r; if(r===range) opt.selected=true;
+        sel.appendChild(opt);
       }
-    });
-    tbody.addEventListener("click", (e)=>{
-      const vb = e.target.closest(".valider-btn");
-      const rb = e.target.closest(".refuser-btn");
-      if (vb){ valider(vb.dataset.user, vb.dataset.jour); }
-      if (rb){ refuser(rb.dataset.user, rb.dataset.jour); }
-    });
-
-    function updateHeure(userKey, jour, type, value){
-      const all = readAll();
-      const rec = all?.[currentWeekKey]?.[userKey];
-      if (!rec) return;
-      if (!rec.jours) rec.jours={};
-      if (!rec.jours[jour]) rec.jours[jour] = { statut:"en-attente" };
-      rec.jours[jour][type] = value;
-      writeAll(all);
-      renderAll();
-    }
-    function valider(userKey, jour){
-      const all = readAll();
-      const rec = all?.[currentWeekKey]?.[userKey];
-      if (!rec) return;
-      if (!rec.jours?.[jour]) rec.jours[jour] = {};
-      rec.jours[jour].statut = "validé";
-      writeAll(all); renderAll();
-    }
-    function refuser(userKey, jour){
-      const all = readAll();
-      const rec = all?.[currentWeekKey]?.[userKey];
-      if (!rec) return;
-      if (!rec.jours?.[jour]) rec.jours[jour] = {};
-      rec.jours[jour].statut = "refusé";
-      writeAll(all); renderAll();
-    }
-
-    /* -------- Rendu principal + planning grille -------- */
-    function renderAll(){
-      refreshInfo();
-
-      const all = readAll();
-      const semaine = all[currentWeekKey] || {};
-
-      // === 1) Tableau d'édition
-      tbody.innerHTML = "";
-      const lignes = {};
-      Object.keys(semaine).forEach(key=>{
-        const rec = semaine[key];
-        const prenom = (rec.prenom||key).trim();
-        if (!lignes[prenom]) lignes[prenom] = { key, jours: rec.jours||{} };
-      });
-      const prenomsTries = Object.keys(lignes).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
-
-      for (const prenom of prenomsTries){
-        const obj = lignes[prenom];
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${prenom}</td>`;
-        let totalValide = 0;
-        for (const jour of jours){
-          const hj = obj.jours?.[jour];
-          const td = document.createElement("td");
-          if (hj && hj.debut && hj.fin){
-            const statut = hj.statut || "en-attente";
-            if (statut === "validé"){
-              const d = calculHeure(hj.debut, hj.fin);
-              if (d>0) totalValide += d;
-            }
-            td.innerHTML = `
-              ${createSelects(hj.debut, hj.fin, obj.key, jour)}
-              <div class="statut ${statut}">${statut}</div>
-              <button class='action-btn valider-btn' data-user="${obj.key}" data-jour="${jour}">Valider</button>
-              <button class='action-btn refuser-btn' data-user="${obj.key}" data-jour="${jour}">Refuser</button>
-            `;
-          } else {
-            td.innerHTML = `
-              ${createSelects("--", "--", obj.key, jour)}
-              <div class="statut en-attente">en-attente</div>
-              <button class='action-btn valider-btn' data-user="${obj.key}" data-jour="${jour}">Valider</button>
-              <button class='action-btn refuser-btn' data-user="${obj.key}" data-jour="${jour}">Refuser</button>
-            `;
-          }
-          tr.appendChild(td);
-        }
-        tr.innerHTML += `<td class="total">${toHM(totalValide)}</td>`;
-        tbody.appendChild(tr);
-      }
-
-      // === 2) Planning en grille (validés uniquement)
-      // Header de la grille (Jours + dates)
-      const dates = jours.map((_,i)=> {
-        const d = addDays(currentMonday, i);
-        return `${d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })}`;
-      });
-
-      // Rows = prénoms en ordre alpha
-      const rows = prenomsTries;
-
-      // Map (row x col) → pill si validé
-      const getCellContent = (prenom) => {
-        const { key, jours:jj } = lignes[prenom] || {};
-        return jours.map(j=>{
-          const h = jj?.[j];
-          if (h?.statut === "validé" && h.debut && h.fin){
-            return `<span class="pill">${h.debut}–${h.fin}</span>`;
-          }
-          return `<span class="empty"></span>`;
-        });
+      sel.onchange = ()=>{
+        const all2 = readAll();
+        all2[weekKey] ??= {};
+        all2[weekKey][k] ??= {prenom:name, jours:{}};
+        all2[weekKey][k].jours[J] ??= {};
+        all2[weekKey][k].jours[J].range = sel.value;
+        writeAll(all2);
+        render();
       };
 
-      // Build DOM
-      let gridHTML = '';
-      // Header row
-      gridHTML += `<div class="wg-row header">
-        <div class="wg-cell">Personnel</div>
-        ${jours.map((j,idx)=>`<div class="wg-cell">${j}<br><small>${dates[idx]}</small></div>`).join('')}
-      </div>`;
+      const b = document.createElement('span');
+      b.textContent = (statut==="validé"?"Validé": statut==="refusé"?"Refusé":"En attente");
+      b.className = badgeClass(statut);
+      b.onclick = ()=>{
+        const all2 = readAll();
+        all2[weekKey] ??= {};
+        all2[weekKey][k] ??= {prenom:name, jours:{}};
+        all2[weekKey][k].jours[J] ??= {};
+        all2[weekKey][k].jours[J].statut = cycleStatut(all2[weekKey][k].jours[J].statut);
+        writeAll(all2);
+        render();
+      };
 
-      // Data rows
-      for (const prenom of rows){
-        const cells = getCellContent(prenom);
-        gridHTML += `<div class="wg-row">
-          <div class="wg-cell">${prenom}</div>
-          ${cells.map(c=>`<div class="wg-cell">${c}</div>`).join('')}
-        </div>`;
-      }
-
-      // Si aucune ligne → quand même afficher skeleton
-      if (rows.length === 0){
-        gridHTML += `<div class="wg-row"><div class="wg-cell">—</div>${jours.map(()=>`<div class="wg-cell empty">Aucune donnée</div>`).join('')}</div>`;
-      }
-
-      planningGrid.innerHTML = gridHTML;
+      const wrap = document.createElement('div');
+      wrap.className = "cell";
+      wrap.appendChild(sel);
+      wrap.appendChild(b);
+      cell.appendChild(wrap);
+      tr.appendChild(cell);
     }
+    const tdTot = document.createElement('td');
+    tdTot.className = "total";
+    tdTot.textContent = toHM(total);
+    tr.appendChild(tdTot);
 
-    /* -------- Vider semaine -------- */
-    document.getElementById("viderSemaine").addEventListener("click", ()=>{
-      const all = readAll();
-      if (all[currentWeekKey]) {
-        if (confirm("Supprimer toutes les données de cette semaine ?")) {
-          delete all[currentWeekKey];
-          writeAll(all);
-          renderAll();
-        }
-      } else alert("Aucune donnée pour cette semaine.");
-    });
+    tbody.appendChild(tr);
+  }
+}
 
-    // init
-    renderAll();
-  </script>
+/* ===== Nav ===== */
+document.getElementById('prev').onclick = ()=>{ monday=addWeeks(monday,-1); weekKey=keyFromMon(monday); render(); };
+document.getElementById('next').onclick = ()=>{ monday=addWeeks(monday, 1); weekKey=keyFromMon(monday); render(); };
+document.getElementById('today').onclick= ()=>{ monday=mondayOf(new Date()); weekKey=keyFromMon(monday); render(); };
+document.getElementById('clear').onclick = ()=>{
+  const all = readAll();
+  if(all[weekKey] && confirm("Vider cette semaine (local) ?")){
+    delete all[weekKey]; writeAll(all); render();
+  }
+};
+
+render();
+</script>
 </body>
 </html>
