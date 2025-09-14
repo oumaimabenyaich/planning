@@ -41,31 +41,61 @@
     .total { font-weight: bold; }
     .horaire-group { display: flex; justify-content: center; align-items: center; gap: 0.25rem; margin-bottom: 0.5rem; }
 
-    /* ========= Planning de la semaine (grille) ========= */
-    .planning { margin-top:2rem; }
-    .planning .heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
-    .planning h2 { margin:0; color:var(--accent); font-size:1.15rem; }
-
-    .weekly-grid {
-      width:100%;
+    /* ========= Planning de la semaine (alignement fixe) ========= */
+    .weekly-grid{
+      /* 1 seule grille pour TOUT (header + lignes) */
+      display:grid;
+      grid-template-columns: 140px repeat(5, 1fr); /* largeur prénom + 5 jours */
       border:1px solid var(--cell-border);
       border-radius:12px;
       overflow:hidden;
       background:var(--card);
       box-shadow: 0 10px 30px rgba(106,27,154,.08);
     }
-    .wg-row { display:grid; grid-template-columns: 180px repeat(5, 1fr); }
-    .wg-row.header { background:var(--col-head); font-weight:bold; color:#3c2a52; }
-    .wg-cell { border-top:1px solid var(--cell-border); border-right:1px solid var(--cell-border); padding:.6rem .7rem; background:var(--cell-bg); min-height:48px; display:flex; align-items:center; gap:.35rem; }
-    .wg-row .wg-cell:first-child { background:#fff; font-weight:bold; color:#3c2a52; }
-    .wg-row .wg-cell:last-child { border-right:none; }
-    .pill {
+
+    /* Chaque "row" devient transparent : ses enfants (wg-cell) s’accrochent
+      directement à la grille parente => colonnes parfaitement alignées */
+    .wg-row{ display: contents; }
+
+    /* cellules */
+    .wg-cell{
+      box-sizing: border-box;
+      border-top:1px solid var(--cell-border);
+      border-right:1px solid var(--cell-border);
+      padding:.6rem .7rem;
+      background:var(--cell-bg);
+      min-height:48px;
+      display:flex; align-items:center; justify-content:center; gap:.35rem;
+    }
+
+    /* en-tête */
+    .wg-row.header .wg-cell{
+      background:var(--col-head);
+      color:#3c2a52;
+      font-weight:bold;
+    }
+
+    /* 1ère colonne (libellé perso) un peu différente */
+    .wg-cell:nth-child(-n+6) { /* première ligne (header) = 6 cellules */
+      /* rien de spécial, juste pour clarté */
+    }
+    .wg-row .wg-cell:first-child{ /* ne s'applique plus avec display:contents */
+      /* supprimé */
+    }
+
+    /* retirer la bordure droite à la 6e cellule de chaque "ligne" (6 colonnes) */
+    .weekly-grid .wg-cell:nth-child(6n){ border-right:none; }
+
+    /* pastille validée */
+    .pill{
       display:inline-flex; align-items:center; gap:.4rem;
-      background:var(--valid-bg); border:1px solid var(--valid-border);
-      padding:.28rem .55rem; border-radius:8px; font-weight:600; color:#1b5e20; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6);
+      background:var(--valid-bg);
+      border:1px solid var(--valid-border);
+      padding:.28rem .55rem; border-radius:8px; font-weight:600; color:#1b5e20;
       white-space:nowrap;
     }
-    .empty { color:#8b7f92; font-style:italic; }
+    .empty{ color:#8b7f92; font-style:italic; }
+
 
     /* Impression : n'imprimer que la grille */
     @media print{
