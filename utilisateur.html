@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Disponibilités Hebdomadaires</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#faf7f9; --text:#2b2a2a; --primary:#d81b60; --primary-dark:#a31447;
+      --accent:#6a1b9a; --line:#e9d7e5; --card:#ffffff;
+      --badge-yellow:#ffd54f; --badge-green:#2e7d32; --badge-red:#c62828;
+    }
+    body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: 2rem; display: flex; flex-direction: column; align-items: center; }
+    h1 { font-size: 2rem; margin-bottom: .25rem; color:var(--accent); }
+    .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.5rem 0 1rem; }
+    .toolbar button { padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; }
+    .toolbar button:hover { background:var(--primary-dark); }
+    #info-semaine { margin: .25rem 0 1rem; color:#444; }
+    .form-container { background: var(--card); padding: 1.25rem; border-radius: 14px; box-shadow: 0 10px 30px rgba(106,27,154,.08); width: 95%; max-width: 1050px; border:1px solid var(--line); }
+    .prenom-input { margin-bottom: 1rem; }
+    label { font-weight: bold; margin-bottom: 0.5rem; color:var(--accent); }
+    input, select { padding: 0.6rem; font-size: 1rem; border-radius: 10px; border: 1px solid var(--line); width: 100%; background:#fff; }
+    .jours { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+    .jour { background: #fff; padding: 1rem; border-radius: 12px; border: 1px solid var(--line); }
+    .statut { margin-top: 0.5rem; display: inline-block; font-weight: bold; font-size: 0.85rem; padding: 0.35rem 0.65rem; border-radius: 999px; }
+    .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
+    .validé { background-color: var(--badge-green); color: white; }
+    .refusé { background-color: var(--badge-red); color: white; }
+    .btn { margin-top: 1rem; padding: 0.9rem 2rem; font-size: 1rem; border-radius: 999px; background-color: var(--primary); color: white; cursor: pointer; }
+    .btn:hover { background-color: var(--primary-dark); }
+    .totaux { display:flex; gap:1rem; justify-content:flex-end; margin-top: .9rem; flex-wrap:wrap; }
+    .total { font-weight: bold; background:#fff; border:1px solid var(--line); border-radius:999px; padding:.55rem .9rem; }
+    .note { margin-top: 1rem; color:#666; font-size: 0.9rem; }
+    @media (max-width: 900px){ .jours{grid-template-columns: 1fr 1fr;} }
+    @media (max-width: 600px){ .jours{grid-template-columns: 1fr;} }
+  </style>
+</head>
+<body>
+  <h1>Disponibilités Hebdomadaires</h1>
+
+  <div class="toolbar">
+    <button id="prevWeek">⟵ Semaine précédente</button>
+    <button id="thisWeek">Cette semaine</button>
+    <button id="nextWeek">Semaine suivante ⟶</button>
+  </div>
+
+  <p id="info-semaine">📅 Chargement...</p>
+
+  <div class="form-container">
+    <div class="prenom-input">
+      <label for="prenom">Prénom :</label>
+      <input type="text" id="prenom" autocomplete="given-name" />
+    </div>
+
+    <div class="jours" id="jours"></div>
+
+    <div class="totaux">
+      <div class="total" id="total-saisi">Total saisi : 0 h</div>
+      <div class="total" id="total-valide">Total validé : 0 h</div>
+    </div>
+
+    <button class="btn" id="envoyer">Enregistrer</button>
+
+    <div class="note">Données en ligne (Firestore).</div>
+  </div>
+
+  <script type="module">
+    import { db, auth, initAuth, normalizeKey } from './firebase.js';
+    import { doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    await initAuth;
+
+    const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
+    const heures = ["--"];
+    for (let h=10; h<=13; h++){ for (let m of [0,15,30,45]){ if (h===13 && m>30) break; heures.push(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`); } }
+
+    // Dates & semaines
+    function mondayOf(date){ const d=new Date(date); d.setHours(0,0,0,0); const day=d.getDay(); const diff=(day===0?-6:1-day); d.setDate(d.getDate()+diff); return d; }
+    function addWeeks(d,n){ const x=new Date(d); x.setDate(d.getDate()+7*n); return x; }
+    function weekKeyFromMonday(mon){ return `${mon.getFullYear()}-${String(mon.getMonth()+1).padStart(2,'0')}-${String(mon.getDate()).padStart(2,'0')}`; }
+    function labelSemaine(mon){ const ven=new Date(mon); ven.setDate(mon.getDate()+4); return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`; }
+
+    let currentMonday = mondayOf(new Date());
+    let currentWeekKey = weekKeyFromMonday(currentMonday);
+    document.getElementById("info-semaine").textContent = labelSemaine(currentMonday);
+
+    // UI
+    const container = document.getElementById("jours");
+    const selects = {};
+    jours.forEach(j=>{
+      const div=document.createElement("div"); div.className="jour";
+      div.innerHTML=`<strong>${j}</strong><br/>Début :
+        <select class="debut"></select><br/>Fin :
+        <select class="fin"></select><br/>
+        <span class="statut en-attente">en-attente</span>`;
+      container.appendChild(div);
+      const [debut,fin,statut]=div.querySelectorAll("select,span");
+      selects[j]={debut,fin,statut};
+      heures.forEach(h=>{ debut.add(new Option(h,h)); fin.add(new Option(h,h)); });
+    });
+
+    // Totaux
+    const hhmmToMin = s => { const [h,m]=s.split(":").map(Number); return h*60+m; };
+    const toHM = mins => `${Math.floor(mins/60)} h${mins%60?(" "+String(mins%60).padStart(2,'0')):""}`.replace(" 00","");
+    const duration = (d,f)=> (d==="--"||f==="--") ? 0 : (hhmmToMin(f)-hhmmToMin(d));
+    function updateTotals(horaires){
+      let saisi=0, valide=0;
+      jours.forEach(j=>{
+        saisi += duration(selects[j].debut.value, selects[j].fin.value);
+        if (horaires[j]?.statut==="validé") valide += duration(horaires[j].debut, horaires[j].fin);
+      });
+      document.getElementById("total-saisi").textContent = `Total saisi : ${toHM(saisi)}`;
+      document.getElementById("total-valide").textContent = `Total validé : ${toHM(valide)}`;
+    }
+
+    // Navigation semaines
+    function refreshWeekLabel(){ document.getElementById("info-semaine").textContent = labelSemaine(currentMonday); }
+    document.getElementById("prevWeek").onclick = ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshWeekLabel(); loadForCurrent(); };
+    document.getElementById("nextWeek").onclick = ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshWeekLabel(); loadForCurrent(); };
+    document.getElementById("thisWeek").onclick = ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); refreshWeekLabel(); loadForCurrent(); };
+
+    // Chargement en fonction du prénom+semaine
+    async function loadForCurrent(){
+      const prenom = document.getElementById("prenom").value.trim();
+      if (!prenom) return;
+      const key = normalizeKey(prenom);
+      const ref = doc(db, "disponibilites", currentWeekKey, "users", key);
+      const snap = await getDoc(ref);
+      if (snap.exists()){
+        const data = snap.data();
+        jours.forEach(j=>{
+          const h = data[j] || {};
+          selects[j].debut.value = h.debut || "--";
+          selects[j].fin.value   = h.fin   || "--";
+          const s = h.statut || "en-attente";
+          selects[j].statut.textContent = s;
+          selects[j].statut.className = "statut " + s;
+          const lock = s==="validé";
+          selects[j].debut.disabled = lock;
+          selects[j].fin.disabled   = lock;
+        });
+        updateTotals(data);
+      } else {
+        jours.forEach(j=>{
+          selects[j].debut.value="--"; selects[j].fin.value="--";
+          selects[j].statut.textContent="en-attente"; selects[j].statut.className="statut en-attente";
+          selects[j].debut.disabled=false; selects[j].fin.disabled=false;
+        });
+        updateTotals({});
+      }
+    }
+
+    document.getElementById("prenom").addEventListener("change", loadForCurrent);
+    for (const j of jours){
+      selects[j].debut.addEventListener("change", ()=>updateTotals({}));
+      selects[j].fin.addEventListener("change",   ()=>updateTotals({}));
+    }
+
+    // Enregistrer (création si absent, sinon mise à jour — l’ownerUid protège)
+    document.getElementById("envoyer").onclick = async () => {
+      const prenomRaw = document.getElementById("prenom").value.trim();
+      if (!prenomRaw) return alert("Entrer votre prénom.");
+      const prenom = prenomRaw.replace(/\s+/g,' ');
+      const key = normalizeKey(prenomRaw);
+
+      const ref = doc(db, "disponibilites", currentWeekKey, "users", key);
+      const snap = await getDoc(ref);
+
+      const payload = { prenom };
+      jours.forEach(j=>{
+        payload[j] = {
+          debut: selects[j].debut.value,
+          fin:   selects[j].fin.value,
+          // on laisse le statut tel qu'affiché (en-attente par défaut)
+          statut: selects[j].statut.textContent || "en-attente"
+        };
+      });
+
+      if (!snap.exists()){
+        // création : DOIT inclure ownerUid (pour passer les règles)
+        await setDoc(ref, { ...payload, ownerUid: auth.currentUser.uid, updatedAt: Date.now() });
+      } else {
+        // mise à jour : autorisée si ownerUid == uid (ou admin)
+        await updateDoc(ref, { ...payload, updatedAt: Date.now() });
+      }
+
+      alert("Disponibilités enregistrées !");
+      loadForCurrent();
+    };
+  </script>
+</body>
+</html>
