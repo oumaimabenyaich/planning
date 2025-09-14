@@ -1,10 +1,33 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <title>test oslm</title>
-  </head>
-  <body>
-    <h1>test oslm</h1>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <title>Accueil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{
+      --bg:#faf7f9;              /* sakura light */
+      --text:#2b2a2a;
+      --primary:#d81b60;         /* cerise */
+      --primary-dark:#a31447;
+      --accent:#6a1b9a;          /* indigo */
+      --line:#e9d7e5;
+      --card:#ffffff;
+    }
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 10vh; background-color: var(--bg); color:var(--text); }
+    h1 { font-size: 2.2rem; color: var(--accent); }
+    p { font-size: 1.1rem; margin-bottom: 2rem; color:#444;}
+    button {
+      padding: 1rem 2rem; margin: 1rem; font-size: 1rem; border: 1px solid var(--primary);
+      border-radius: 999px; background-color: var(--primary); color: white; cursor: pointer; transition: .2s;
+      box-shadow: 0 4px 12px rgba(216,27,96,.2);
+    }
+    button:hover { background-color: var(--primary-dark); transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+  <h1>D'Asie Express </h1>
+  <button onclick="location.href='utilisateur.html'">La Team</button>
+  <button onclick="location.href='admin.html'">Tam</button>
+</body>
 </html>
