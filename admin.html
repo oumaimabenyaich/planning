@@ -9,28 +9,52 @@
       --bg:#faf7f9; --text:#2b2a2a; --primary:#d81b60; --primary-dark:#a31447;
       --accent:#6a1b9a; --line:#e9d7e5; --card:#ffffff;
       --badge-yellow:#ffd54f; --badge-green:#2e7d32; --badge-red:#c62828;
-      --valid-bg:#c8e6c9;      /* vert doux */
-      --valid-border:#81c784;
-      --cell-bg:#faf8fc;       /* fond cellule léger */
-      --cell-border:#eadff0;
-      --col-head:#f3e3ee;
+      --valid-bg:#c8e6c9; --valid-border:#81c784;
+      --cell-bg:#faf8fc; --cell-border:#eadff0; --col-head:#f3e3ee;
+
+      /* layout responsive */
+      --page-pad: clamp(8px, 3vw, 24px);
+      --gap: 12px;
+      --top-height: 220px; /* recalculé en JS */
     }
-    body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: 2rem; }
-    h1 { text-align: center; color:var(--accent); margin-bottom:.25rem; }
+
+    /* base */
+    body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: var(--page-pad); margin:0; }
+    h1 { text-align: center; color:var(--accent); margin:.25rem 0; }
     #info-semaine { text-align:center; margin-bottom:1rem; color:#544a5d; }
 
     .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 1rem; }
     .toolbar button {
-      padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
+      padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary);
+      background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
       box-shadow: 0 4px 12px rgba(216,27,96,.15);
     }
     .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
 
-    /* Tableau d'édition (inchangé) */
-    table { width: 100%; border-collapse: collapse; background: var(--card); margin-top: 1rem; border:1px solid var(--line); box-shadow: 0 10px 30px rgba(106,27,154,.08); }
-    th, td { padding: 1rem; border: 1px solid var(--line); text-align: center; }
-    th { background: var(--col-head); color: #3c2a52; }
-    select { margin: 0.3rem 0.2rem; padding: 0.6rem; border-radius:10px; border:1px solid var(--line); background:#fff; }
+    /* ===== Tableau d’édition dimensionné à la page ===== */
+    .table-wrap{
+      inline-size: 100%;
+      max-inline-size: 100%;
+      block-size: calc(100svh - var(--top-height) - var(--gap) - var(--page-pad));
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--card);
+      box-shadow: 0 6px 16px rgba(106,27,154,.06);
+    }
+    .table-wrap table{
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      margin: 0;
+      border: 0;
+      box-shadow: none;
+      background: var(--card);
+    }
+    th, td { padding: clamp(6px, 1.2vw, 16px); border: 1px solid var(--line); text-align: center; }
+    thead th{ position: sticky; top: 0; z-index: 1; background: var(--col-head); color:#3c2a52; }
+    select { margin: 0.3rem 0.2rem; padding: 0.6rem; border-radius:10px; border:1px solid var(--line); background:#fff; width:100%; }
     .statut { display: inline-block; padding: 0.35rem 0.65rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; }
     .validé { background-color: var(--badge-green); color: white; }
     .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
@@ -38,26 +62,25 @@
     .action-btn { font-size: 0.75rem; margin: 0.2rem; padding: 0.35rem 0.6rem; border: none; border-radius: 999px; cursor: pointer; }
     .valider-btn { background-color: var(--badge-green); color: white; }
     .refuser-btn { background-color: var(--badge-red); color: white; }
-    .total { font-weight: bold; }
+    .total { font-weight: bold; white-space:nowrap; }
     .horaire-group { display: flex; justify-content: center; align-items: center; gap: 0.25rem; margin-bottom: 0.5rem; }
+    td:first-child, th:first-child{ max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     /* ========= Planning de la semaine (alignement fixe) ========= */
+    .planning { margin-top: 1rem; }
+    .planning .heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+    .planning h2 { margin:0; color:var(--accent); font-size:1.05rem; }
+
     .weekly-grid{
-      /* 1 seule grille pour TOUT (header + lignes) */
       display:grid;
-      grid-template-columns: 140px repeat(5, 1fr); /* largeur prénom + 5 jours */
+      grid-template-columns: 140px repeat(5, 1fr);
       border:1px solid var(--cell-border);
       border-radius:12px;
       overflow:hidden;
       background:var(--card);
       box-shadow: 0 10px 30px rgba(106,27,154,.08);
     }
-
-    /* Chaque "row" devient transparent : ses enfants (wg-cell) s’accrochent
-      directement à la grille parente => colonnes parfaitement alignées */
     .wg-row{ display: contents; }
-
-    /* cellules */
     .wg-cell{
       box-sizing: border-box;
       border-top:1px solid var(--cell-border);
@@ -67,26 +90,9 @@
       min-height:48px;
       display:flex; align-items:center; justify-content:center; gap:.35rem;
     }
-
-    /* en-tête */
-    .wg-row.header .wg-cell{
-      background:var(--col-head);
-      color:#3c2a52;
-      font-weight:bold;
-    }
-
-    /* 1ère colonne (libellé perso) un peu différente */
-    .wg-cell:nth-child(-n+6) { /* première ligne (header) = 6 cellules */
-      /* rien de spécial, juste pour clarté */
-    }
-    .wg-row .wg-cell:first-child{ /* ne s'applique plus avec display:contents */
-      /* supprimé */
-    }
-
-    /* retirer la bordure droite à la 6e cellule de chaque "ligne" (6 colonnes) */
+    .wg-row.header .wg-cell{ background:var(--col-head); color:#3c2a52; font-weight:bold; }
     .weekly-grid .wg-cell:nth-child(6n){ border-right:none; }
 
-    /* pastille validée */
     .pill{
       display:inline-flex; align-items:center; gap:.4rem;
       background:var(--valid-bg);
@@ -96,11 +102,10 @@
     }
     .empty{ color:#8b7f92; font-style:italic; }
 
-
     /* Impression : n'imprimer que la grille */
     @media print{
       body{ background:#fff; padding:0; }
-      .toolbar, table, #info-semaine, h1 { display:none !important; }
+      .toolbar, .table-wrap, #info-semaine, h1 { display:none !important; }
       .planning{ margin:0; box-shadow:none; }
       .weekly-grid{ border:none; }
       .wg-cell{ background:#fff; }
@@ -108,42 +113,44 @@
   </style>
 </head>
 <body>
-  <h1>Edition des Horaires</h1>
+  <div class="top-zone">
+    <h1>Edition des Horaires</h1>
 
-  <div class="toolbar">
-    <button id="prevWeek">⟵ Semaine précédente</button>
-    <button id="thisWeek">Cette semaine</button>
-    <button id="nextWeek">Semaine suivante ⟶</button>
-    <button id="viderSemaine">Vider cette semaine (local)</button>
+    <div class="toolbar">
+      <button id="prevWeek">⟵ Semaine précédente</button>
+      <button id="thisWeek">Cette semaine</button>
+      <button id="nextWeek">Semaine suivante ⟶</button>
+      <button id="viderSemaine">Vider cette semaine (local)</button>
+    </div>
+
+    <p id="info-semaine">Chargement...</p>
   </div>
 
-  <p id="info-semaine">Chargement...</p>
+  <!-- Tableau d’édition dimensionné -->
+  <div class="table-wrap">
+    <table id="tableau">
+      <thead>
+        <tr>
+          <th>Prénom</th>
+          <th>Lundi</th>
+          <th>Mardi</th>
+          <th>Mercredi</th>
+          <th>Jeudi</th>
+          <th>Vendredi</th>
+          <th>Total validé</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-  <!-- Tableau d’édition -->
-  <table id="tableau">
-    <thead>
-      <tr>
-        <th>Prénom</th>
-        <th>Lundi</th>
-        <th>Mardi</th>
-        <th>Mercredi</th>
-        <th>Jeudi</th>
-        <th>Vendredi</th>
-        <th>Total validé</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <!-- Planning validé en grille -->
+  <!-- Planning validé -->
   <section class="planning">
     <div class="heading">
       <h2 id="planning-title">Planning — Semaine</h2>
       <small style="color:#6b5b7a">Imprime pour une version propre (Ctrl/Cmd + P)</small>
     </div>
-    <div class="weekly-grid" id="planning-grid">
-      <!-- rempli en JS -->
-    </div>
+    <div class="weekly-grid" id="planning-grid"></div>
   </section>
 
   <script>
@@ -156,7 +163,6 @@
     function addDays(d,n){ const x=new Date(d); x.setDate(d.getDate()+n); return x; }
     function addWeeks(d,n){ return addDays(d,7*n); }
     function labelSemaine(mon){ const ven=new Date(mon); ven.setDate(mon.getDate()+4); return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`; }
-    function normalizeKey(name){ return name.trim().replace(/\s+/g,' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
     /* -------- Storage -------- */
     const LS_KEY = "disponibilites_local";
@@ -175,7 +181,12 @@
 
     const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
     const heures = ["--"];
-    for (let h=10; h<=13; h++){ for (let m of [0,15,30,45]){ if (h===13 && m>30) break; heures.push(`${pad(h)}:${pad(m)}`); } }
+    for (let h=10; h<=13; h++){
+      for (let m of [0,15,30,45]){
+        if (h===13 && m>30) break;
+        heures.push(`${pad(h)}:${pad(m)}`);
+      }
+    }
 
     function refreshInfo(){
       infoSemaine.textContent = labelSemaine(currentMonday);
@@ -184,9 +195,9 @@
     }
 
     /* -------- Navigation -------- */
-    document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
-    document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
-    document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); renderAll(); });
+    document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
+    document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
+    document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
 
     /* -------- Calculs -------- */
     function calculHeure(debut, fin) {
@@ -247,6 +258,16 @@
       writeAll(all); renderAll();
     }
 
+    /* -------- Fit to viewport (mesure la zone du haut) -------- */
+    function fitTableHeight(){
+      const topZone = document.querySelector('.top-zone');
+      if(!topZone) return;
+      const h = topZone.getBoundingClientRect().height + 8; // petite marge
+      document.documentElement.style.setProperty('--top-height', h + 'px');
+    }
+    window.addEventListener('load', fitTableHeight);
+    window.addEventListener('resize', fitTableHeight);
+
     /* -------- Rendu principal + planning grille -------- */
     function renderAll(){
       refreshInfo();
@@ -269,7 +290,7 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${prenom}</td>`;
         let totalValide = 0;
-        for (const jour of jours){
+        for (const jour of ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"]){
           const hj = obj.jours?.[jour];
           const td = document.createElement("td");
           if (hj && hj.debut && hj.fin){
@@ -299,36 +320,29 @@
       }
 
       // === 2) Planning en grille (validés uniquement)
-      // Header de la grille (Jours + dates)
-      const dates = jours.map((_,i)=> {
+      const dates = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map((_,i)=> {
         const d = addDays(currentMonday, i);
         return `${d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })}`;
       });
 
-      // Rows = prénoms en ordre alpha
       const rows = prenomsTries;
-
-      // Map (row x col) → pill si validé
       const getCellContent = (prenom) => {
         const { key, jours:jj } = lignes[prenom] || {};
-        return jours.map(j=>{
+        return ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map(j=>{
           const h = jj?.[j];
           if (h?.statut === "validé" && h.debut && h.fin){
             return `<span class="pill">${h.debut}–${h.fin}</span>`;
           }
-          return `<span class="empty"></span>`;
+          return `<span class="empty">—</span>`;
         });
       };
 
-      // Build DOM
       let gridHTML = '';
-      // Header row
       gridHTML += `<div class="wg-row header">
         <div class="wg-cell">Personnel</div>
-        ${jours.map((j,idx)=>`<div class="wg-cell">${j}<br><small>${dates[idx]}</small></div>`).join('')}
+        ${["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map((j,idx)=>`<div class="wg-cell">${j}<br><small>${dates[idx]}</small></div>`).join('')}
       </div>`;
 
-      // Data rows
       for (const prenom of rows){
         const cells = getCellContent(prenom);
         gridHTML += `<div class="wg-row">
@@ -337,25 +351,15 @@
         </div>`;
       }
 
-      // Si aucune ligne → quand même afficher skeleton
       if (rows.length === 0){
-        gridHTML += `<div class="wg-row"><div class="wg-cell">—</div>${jours.map(()=>`<div class="wg-cell empty">Aucune donnée</div>`).join('')}</div>`;
+        gridHTML += `<div class="wg-row"><div class="wg-cell">—</div>${["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map(()=>`<div class="wg-cell empty">Aucune donnée</div>`).join('')}</div>`;
       }
 
       planningGrid.innerHTML = gridHTML;
-    }
 
-    /* -------- Vider semaine -------- */
-    document.getElementById("viderSemaine").addEventListener("click", ()=>{
-      const all = readAll();
-      if (all[currentWeekKey]) {
-        if (confirm("Supprimer toutes les données de cette semaine ?")) {
-          delete all[currentWeekKey];
-          writeAll(all);
-          renderAll();
-        }
-      } else alert("Aucune donnée pour cette semaine.");
-    });
+      // ajuste la hauteur disponible pour le tableau
+      fitTableHeight();
+    }
 
     // init
     renderAll();
