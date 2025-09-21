@@ -14,14 +14,36 @@
       --line:#e9d7e5;
       --card:#ffffff;
     }
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 10vh; background-color: var(--bg); color:var(--text); }
-    h1 { font-size: 2.2rem; color: var(--accent); }
-    p { font-size: 1.1rem; margin-bottom: 2rem; color:#444;}
-    button {
-      padding: 1rem 2rem; margin: 1rem; font-size: 1rem; border: 1px solid var(--primary);
-      border-radius: 999px; background-color: var(--primary); color: white; cursor: pointer; transition: .2s;
-      box-shadow: 0 4px 12px rgba(216,27,96,.2);
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+
+      /* Centrage parfait avec flexbox */
+      display: flex;
+      flex-direction: column;   /* empile le titre et les boutons */
+      justify-content: center;  /* centre verticalement */
+      align-items: center;      /* centre horizontalement */
+      height: 100vh;            /* prend toute la hauteur de l’écran */
+      margin: 0;                /* supprime les marges par défaut */
+      text-align: center;
     }
+
+    h1 { font-size: 2.2rem; color: var(--accent); margin-bottom: 1rem; }
+    p { font-size: 1.1rem; margin-bottom: 2rem; color:#444;}
+
+    button {
+      padding: 1rem 2rem; margin: 0.5rem;
+      font-size: 1rem; border: 1px solid var(--primary);
+      border-radius: 999px;
+      background-color: var(--primary);
+      color: white; cursor: pointer; transition: .2s;
+      box-shadow: 0 4px 12px rgba(216,27,96,.2);
+      width: 200px;             /* fixe une largeur pour homogénéiser */
+      max-width: 80%;           /* mais reste responsive sur petits écrans */
+    }
+
     button:hover { background-color: var(--primary-dark); transform: translateY(-1px); }
   </style>
 </head>
