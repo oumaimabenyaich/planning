@@ -5,339 +5,263 @@
   <title>Tableau Admin - Edition des Horaires</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root{
-      --blue:#1976d2; --line:#e0e0e0; --bg:#f9f9f9; --card:#fff; --text:#222;
-      --yellow:#ffd54f; --green:#2e7d32; --red:#c62828; --head:#1976d2;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 1rem;
+      background: #f9f9f9;
     }
 
-    /* Page & toolbar */
-    body{ margin:0; font-family:Arial, sans-serif; background:var(--bg); color:var(--text); padding:16px; }
-    h1{ margin:.25rem 0 .75rem; text-align:center; color:#4a148c; font-size:24px; }
-    .toolbar{ display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 12px; }
-    .toolbar button{
-      padding:.45rem .9rem; border-radius:999px; border:1px solid #d81b60;
-      background:#d81b60; color:#fff; cursor:pointer; transition:.2s; box-shadow:0 4px 12px rgba(216,27,96,.15);
-      font-weight:600;
+    h1 { text-align: center; color:#333; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
     }
-    .toolbar button:hover{ background:#a31447; transform:translateY(-1px); }
-    #info-semaine{ text-align:center; color:#555; margin:.35rem 0 12px; font-size:14px; }
-
-    /* Tableau compact style « capture » */
-    .table-wrap{ width:100%; border:1px solid var(--line); border-radius:12px; background:var(--card); overflow:hidden; box-shadow:0 6px 16px rgba(0,0,0,.05); }
-    table{ width:100%; border-collapse:collapse; table-layout:fixed; }
-    colgroup col.col-name  { width:26%; }
-    colgroup col.col-day   { width:12.4%; }
-    colgroup col.col-total { width:12%; }
-
-    th,td{ border:1px solid var(--line); text-align:center; vertical-align:top; padding:8px; font-size:14px; }
-    thead th{ background:var(--head); color:#fff; font-weight:bold; }
-
-    /* Contenu jour (affichage) */
-    .cell{ display:flex; flex-direction:column; align-items:center; gap:6px; }
-    .pills{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
-    .pill{
-      display:inline-block; padding:3px 8px; border-radius:6px; font-weight:600; font-size:13px;
-      background:#eef2ff; border:1px solid #cfd8ff;
+    th, td {
+      border: 1px solid #ddd;
+      text-align: center;
+      padding: 6px;
+      font-size: 14px;
+      vertical-align: top;
     }
-    .dash{ background:var(--yellow); border:none; color:#333; }
-
-    .statut{ display:inline-block; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:700; white-space:nowrap; }
-    .en-attente{ background:var(--yellow); color:#333; }
-    .validé{ background:var(--green); color:#fff; }
-    .refusé{ background:var(--red); color:#fff; }
-
-    .actions{ display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
-    .btn{ border:none; border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; }
-    .btn-ok{ background:var(--green); color:#fff; }
-    .btn-no{ background:var(--red); color:#fff; }
-
-    .edit{ font-size:12px; color:#1976d2; text-decoration:underline; cursor:pointer; }
-
-    .total{ font-weight:bold; white-space:nowrap; }
-
-    /* Planning validé */
-    .planning{ margin-top:16px; }
-    .heading{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-    .heading h2{ margin:0; color:#4a148c; font-size:18px; }
-    .heading small{ color:#777; }
-    .weekly-grid{ display:grid; grid-template-columns: 120px repeat(5,1fr); border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--card); }
-    .wg-row{ display:contents; }
-    .wg-cell{ border-top:1px solid var(--line); border-right:1px solid var(--line); padding:10px; text-align:center; font-size:14px; }
-    .wg-row.header .wg-cell{ background:#ece7f4; font-weight:bold; }
-    .weekly-grid .wg-cell:nth-child(6n){ border-right:none; }
-    .pill-green{ display:inline-block; padding:3px 8px; border-radius:6px; background:#eaf6ea; border:1px solid #b9e0b9; color:#1b5e20; font-weight:600; }
-
-    /* POP-UP d’édition (modale) */
-    .modal{
-      position: fixed; inset: 0; display:none; align-items: center; justify-content: center;
-      background: rgba(0,0,0,.35); z-index: 50; padding:16px;
+    th {
+      background: #1976d2;   /* bleu entête */
+      color: white;
+      font-weight: bold;
     }
-    .modal.open{ display:flex; }
-    .modal-card{
-      background:#fff; width:100%; max-width:420px; border-radius:12px; padding:16px; box-shadow:0 20px 60px rgba(0,0,0,.25);
-    }
-    .modal-title{ margin:0 0 12px; font-size:18px; color:#4a148c; text-align:center; }
-    .row{ display:flex; gap:8px; }
-    .row input[type="time"]{
-      flex:1; min-width:0; height:40px; padding:0 8px; border:1px solid var(--line); border-radius:8px; font-size:16px;
-    }
-    .modal-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
-    .ghost{ background:#eee; color:#333; }
 
-    /* Mobile */
+    /* Contenu cellule */
+    .horaire {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      margin: 4px 0;
+    }
+    select {
+      padding: 2px 4px;
+      font-size: 13px;
+    }
+
+    .statut {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      margin: 4px 0;
+    }
+    .en-attente { background: #ffd54f; color: #333; }
+    .validé     { background: #2e7d32; color: white; }
+    .refusé     { background: #c62828; color: white; }
+
+    .action-btn {
+      border: none;
+      border-radius: 4px;
+      padding: 3px 6px;
+      font-size: 12px;
+      margin: 2px 4px;
+      cursor: pointer;
+    }
+    .valider-btn { background: #2e7d32; color:white; }
+    .refuser-btn { background: #c62828; color:white; }
+
+    /* Mobile : compacter un peu */
     @media (max-width:600px){
-      body{ padding:12px; }
-      h1{ font-size:20px; }
-      #info-semaine{ font-size:12px; }
-      th,td{ padding:6px; font-size:12.5px; }
-      .pill{ font-size:12px; }
-      .statut{ font-size:11.5px; }
-      .btn{ font-size:11.5px; padding:3px 6px; }
-      /* colonnes resserrées mais lisibles, zéro scroll horizontal */
-      colgroup col.col-name  { width:26%; }
-      colgroup col.col-day   { width:12.4%; }
-      colgroup col.col-total { width:12%; }
-      .weekly-grid{ grid-template-columns: 96px repeat(5,1fr); }
-      .wg-cell{ padding:8px; font-size:12px; }
+      th, td { font-size: 12px; padding: 4px; }
+      select { font-size: 11px; }
+      .action-btn { font-size: 11px; padding: 2px 5px; }
     }
   </style>
 </head>
 <body>
-  <h1>Edition des Horaires</h1>
+  <h1>Tableau Admin - Edition des Horaires</h1>
 
-  <div class="toolbar">
-    <button id="prevWeek">⟵ Semaine précédente</button>
-    <button id="thisWeek">Cette semaine</button>
-    <button id="nextWeek">Semaine suivante ⟶</button>
-    <button id="viderSemaine">Vider cette semaine (local)</button>
-  </div>
+  <table id="planning">
+    <thead>
+      <tr>
+        <th>Prénom</th>
+        <th>Lundi</th>
+        <th>Mardi</th>
+        <th>Mercredi</th>
+        <th>Jeudi</th>
+        <th>Vendredi</th>
+        <th>Total validé</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Exemple : duplique cette <tr> pour ajouter d’autres personnes -->
+      <tr>
+        <td>Oumaima</td>
 
-  <p id="info-semaine">Chargement...</p>
+        <!-- Lundi -->
+        <td>
+          <div class="horaire">
+            <select class="debut"></select>
+            <select class="fin"></select>
+          </div>
+          <div class="statut en-attente">en-attente</div><br>
+          <button class="action-btn valider-btn">Valider</button>
+          <button class="action-btn refuser-btn">Refuser</button>
+        </td>
 
-  <div class="table-wrap">
-    <table id="tableau">
-      <colgroup>
-        <col class="col-name" />
-        <col class="col-day" />
-        <col class="col-day" />
-        <col class="col-day" />
-        <col class="col-day" />
-        <col class="col-day" />
-        <col class="col-total" />
-      </colgroup>
-      <thead>
-        <tr>
-          <th>Prénom</th>
-          <th>Lundi</th>
-          <th>Mardi</th>
-          <th>Mercredi</th>
-          <th>Jeudi</th>
-          <th>Vendredi</th>
-          <th>Total validé</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+        <!-- Mardi (vide / "--") -->
+        <td>
+          <div class="horaire">
+            <select class="debut"></select>
+            <select class="fin"></select>
+          </div>
+          <div class="statut en-attente">en-attente</div><br>
+          <button class="action-btn valider-btn">Valider</button>
+          <button class="action-btn refuser-btn">Refuser</button>
+        </td>
 
-  <section class="planning">
-    <div class="heading">
-      <h2 id="planning-title">Planning validé — Semaine</h2>
-      <small>Imprime pour une version propre (Ctrl/Cmd + P)</small>
-    </div>
-    <div class="weekly-grid" id="planning-grid"></div>
-  </section>
+        <!-- Mercredi -->
+        <td>
+          <div class="horaire">
+            <select class="debut"></select>
+            <select class="fin"></select>
+          </div>
+          <div class="statut en-attente">en-attente</div><br>
+          <button class="action-btn valider-btn">Valider</button>
+          <button class="action-btn refuser-btn">Refuser</button>
+        </td>
 
-  <!-- MODALE d’édition -->
-  <div class="modal" id="editor">
-    <div class="modal-card">
-      <h3 class="modal-title" id="editor-title">Modifier</h3>
-      <div class="row">
-        <input type="time" id="ed-debut" step="900" min="10:00" max="13:30">
-        <input type="time" id="ed-fin"   step="900" min="10:00" max="13:30">
-      </div>
-      <div class="modal-actions">
-        <button class="btn ghost" id="ed-cancel">Annuler</button>
-        <button class="btn btn-ok" id="ed-save">Sauvegarder</button>
-      </div>
-    </div>
-  </div>
+        <!-- Jeudi -->
+        <td>
+          <div class="horaire">
+            <select class="debut"></select>
+            <select class="fin"></select>
+          </div>
+          <div class="statut en-attente">en-attente</div><br>
+          <button class="action-btn valider-btn">Valider</button>
+          <button class="action-btn refuser-btn">Refuser</button>
+        </td>
+
+        <!-- Vendredi -->
+        <td>
+          <div class="horaire">
+            <select class="debut"></select>
+            <select class="fin"></select>
+          </div>
+          <div class="statut en-attente">en-attente</div><br>
+          <button class="action-btn valider-btn">Valider</button>
+          <button class="action-btn refuser-btn">Refuser</button>
+        </td>
+
+        <td class="total-valide">0.00 h</td>
+      </tr>
+    </tbody>
+  </table>
 
   <script>
-    /* === Helpers === */
+    /* ========= Utilitaires ========= */
     const pad = n => String(n).padStart(2,'0');
-    const hhmmToMin = s => { if(!s) return 0; const [h,m]=s.split(":").map(Number); return h*60+m; };
-    const toHM = mins => `${(mins/60).toFixed(2)} h`; // 0.00 h comme ta capture
-    function mondayOf(date){ const d=new Date(date); d.setHours(0,0,0,0); const day=d.getDay(); const diff=(day===0?-6:1-day); d.setDate(d.getDate()+diff); return d; }
-    function weekKeyFromMonday(mon){ return `${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`; }
-    function addDays(d,n){ const x=new Date(d); x.setDate(d.getDate()+n); return x; }
-    function addWeeks(d,n){ return addDays(d,7*n); }
-    function labelSemaine(mon){ const ven=new Date(mon); ven.setDate(mon.getDate()+4); return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`; }
-
-    /* === Storage === */
-    const LS_KEY="disponibilites_local";
-    const readAll=()=>{ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"{}"); } catch { return {}; } };
-    const writeAll=o=>localStorage.setItem(LS_KEY, JSON.stringify(o));
-
-    /* === UI refs === */
-    const infoSemaine=document.getElementById("info-semaine");
-    const tbody=document.querySelector("#tableau tbody");
-    const planningTitle=document.getElementById("planning-title");
-    const planningGrid=document.getElementById("planning-grid");
-
-    /* === Semaine courante === */
-    let currentMonday=mondayOf(new Date());
-    let currentWeekKey=weekKeyFromMonday(currentMonday);
-
-    const jours=["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
-
-    /* === Editor state === */
-    const editor=document.getElementById('editor');
-    const edDebut=document.getElementById('ed-debut');
-    const edFin=document.getElementById('ed-fin');
-    const edTitle=document.getElementById('editor-title');
-    let edUserKey=null, edJour=null;
-
-    function openEditor(userKey, jour, debut, fin, prenom){
-      edUserKey=userKey; edJour=jour;
-      edTitle.textContent = `Modifier — ${prenom} • ${jour}`;
-      edDebut.value = debut || "";
-      edFin.value   = fin   || "";
-      editor.classList.add('open');
-    }
-    function closeEditor(){ editor.classList.remove('open'); edUserKey=null; edJour=null; }
-
-    document.getElementById('ed-cancel').addEventListener('click', closeEditor);
-    document.getElementById('ed-save').addEventListener('click', ()=>{
-      const all=readAll();
-      const rec = all?.[currentWeekKey]?.[edUserKey];
-      if(!rec) return closeEditor();
-      if(!rec.jours) rec.jours={};
-      if(!rec.jours[edJour]) rec.jours[edJour]={statut:"en-attente"};
-      rec.jours[edJour].debut = edDebut.value || null;
-      rec.jours[edJour].fin   = edFin.value   || null;
-      writeAll(all);
-      closeEditor();
-      renderAll();
-    });
-    editor.addEventListener('click',e=>{ if(e.target===editor) closeEditor(); });
-
-    /* === Navigation === */
-    document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
-    document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
-    document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
-    document.getElementById("viderSemaine").addEventListener("click", ()=>{
-      if(!confirm("Tu veux vraiment VIDER toute cette semaine (local) ?")) return;
-      const all=readAll(); delete all[currentWeekKey]; writeAll(all); renderAll();
-    });
-
-    /* === Rendu === */
-    function pillFor(h){ return `<span class="pill">${h}</span>`; }
-    function dash(){ return `<span class="pill dash">--</span>`; }
-
-    function renderAll(){
-      infoSemaine.textContent = labelSemaine(currentMonday);
-      const ven = addDays(currentMonday,4);
-      planningTitle.textContent = `Planning validé — du ${currentMonday.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`;
-
-      const all=readAll();
-      const semaine=all[currentWeekKey] || {};
-
-      // Regrouper par prénom affiché
-      const lignes={};
-      Object.keys(semaine).forEach(key=>{
-        const rec=semaine[key];
-        const prenom=(rec.prenom||key).trim();
-        if(!lignes[prenom]) lignes[prenom]={ key, prenom, jours: rec.jours||{} };
-      });
-      const prenomsTries=Object.keys(lignes).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
-
-      tbody.innerHTML='';
-      for(const prenom of prenomsTries){
-        const obj=lignes[prenom];
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td>${prenom}</td>`;
-        let total=0;
-
-        for(const j of jours){
-          const hj=obj.jours?.[j];
-          const debut=hj?.debut || null;
-          const fin  =hj?.fin   || null;
-          const statut = hj?.statut || 'en-attente';
-          if(statut==='validé' && debut && fin){
-            const d=hhmmToMin(fin)-hhmmToMin(debut);
-            if(d>0) total += d;
-          }
-
-          const htmlPills = (debut || fin)
-            ? `<div class="pills">${debut?pillFor(debut):dash()} ${fin?pillFor(fin):dash()}</div>`
-            : `<div class="pills">${dash()}</div>`;
-
-          const td=document.createElement('td');
-          td.innerHTML = `
-            <div class="cell">
-              ${htmlPills}
-              <div class="statut ${statut}">${statut}</div>
-              <div class="actions">
-                <button class="btn btn-ok" data-act="ok"  data-user="${obj.key}" data-jour="${j}">Valider</button>
-                <button class="btn btn-no" data-act="no"  data-user="${obj.key}" data-jour="${j}">Refuser</button>
-              </div>
-              <div class="edit" data-act="edit" data-user="${obj.key}" data-jour="${j}" data-debut="${debut||''}" data-fin="${fin||''}" data-name="${prenom}">modifier</div>
-            </div>
-          `;
-          tr.appendChild(td);
+    function buildHourOptions(sel, selected="--"){
+      sel.innerHTML = "";
+      const opt0 = document.createElement("option");
+      opt0.value="--"; opt0.textContent="--";
+      sel.appendChild(opt0);
+      for(let h=10; h<=13; h++){
+        for(const m of [0,15,30,45]){
+          if(h===13 && m>30) break;
+          const v = `${pad(h)}:${pad(m)}`;
+          const o = document.createElement("option");
+          o.value=v; o.textContent=v;
+          if(v===selected) o.selected=true;
+          sel.appendChild(o);
         }
-        tr.innerHTML += `<td class="total">${toHM(total)}</td>`;
-        tbody.appendChild(tr);
       }
+    }
+    const hhmmToMin = s => { const [h,m]=s.split(":").map(Number); return h*60+m; };
+    const formatH = mins => (mins/60).toFixed(2) + " h";
 
-      // Planning validé
-      const dates = jours.map((_,i)=> addDays(currentMonday,i).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) );
-      let grid = `<div class="wg-row header">
-        <div class="wg-cell">Personnel</div>
-        ${jours.map((j,i)=>`<div class="wg-cell">${j}<br><small>${dates[i]}</small></div>`).join('')}
-      </div>`;
-      for(const prenom of prenomsTries){
-        const {jours:jj}=lignes[prenom];
-        grid += `<div class="wg-row"><div class="wg-cell">${prenom}</div>${
-          jours.map(j=>{
-            const h=jj?.[j];
-            return (h?.statut==='validé' && h.debut && h.fin)
-              ? `<div class="wg-cell"><span class="pill-green">${h.debut}–${h.fin}</span></div>`
-              : `<div class="wg-cell"><span class="empty">—</span></div>`;
-          }).join('')
-        }</div>`;
-      }
-      planningGrid.innerHTML = grid;
+    function duration(debut, fin){
+      if(!debut || !fin || debut==="--" || fin==="--") return 0;
+      const d = hhmmToMin(fin) - hhmmToMin(debut);
+      return d>0 ? d : 0;
     }
 
-    // Délégation d’événements sur le tableau (valider / refuser / éditer)
-    tbody.addEventListener('click', (e)=>{
-      const btn = e.target.closest('[data-act]');
-      if(!btn) return;
-      const act=btn.dataset.act, user=btn.dataset.user, jour=btn.dataset.jour;
-
-      const all=readAll();
-      const rec=all?.[currentWeekKey]?.[user];
-      if(!rec) return;
-
-      if(act==='ok'){
-        if(!rec.jours) rec.jours={};
-        if(!rec.jours[jour]) rec.jours[jour]={};
-        rec.jours[jour].statut='validé';
-        writeAll(all); renderAll();
-      }else if(act==='no'){
-        if(!rec.jours) rec.jours={};
-        if(!rec.jours[jour]) rec.jours[jour]={};
-        rec.jours[jour].statut='refusé';
-        writeAll(all); renderAll();
-      }else if(act==='edit'){
-        openEditor(user, jour, btn.dataset.debut||null, btn.dataset.fin||null, btn.dataset.name||'');
-      }
+    /* ========= Initialisation des selects ========= */
+    document.querySelectorAll("#planning tbody tr").forEach(tr=>{
+      tr.querySelectorAll("td").forEach((td, idx)=>{
+        const debut = td.querySelector("select.debut");
+        const fin   = td.querySelector("select.fin");
+        if(debut && fin){
+          buildHourOptions(debut);
+          buildHourOptions(fin);
+        }
+      });
     });
 
-    // Init
-    renderAll();
+    /* ========= Logique des boutons & totaux ========= */
+    function computeRowTotal(tr){
+      let totalMin = 0;
+      tr.querySelectorAll("td").forEach(td=>{
+        const statut = td.querySelector(".statut");
+        const debut = td.querySelector("select.debut");
+        const fin   = td.querySelector("select.fin");
+        if(statut && debut && fin && statut.textContent.trim()==="validé"){
+          totalMin += duration(debut.value, fin.value);
+        }
+      });
+      tr.querySelector(".total-valide").textContent = formatH(totalMin);
+    }
+
+    function setStatus(td, status){
+      const badge = td.querySelector(".statut");
+      badge.classList.remove("en-attente","validé","refusé");
+      badge.classList.add(status);
+      badge.textContent = status;
+
+      const debut = td.querySelector("select.debut");
+      const fin   = td.querySelector("select.fin");
+      const lock = (status === "validé");
+      if(debut) debut.disabled = lock;
+      if(fin)   fin.disabled   = lock;
+    }
+
+    // Délégation d’événements sur le tableau
+    document.getElementById("planning").addEventListener("click", (e)=>{
+      const btnVal = e.target.closest(".valider-btn");
+      const btnRef = e.target.closest(".refuser-btn");
+      if(!btnVal && !btnRef) return;
+
+      const td = e.target.closest("td");
+      const tr = e.target.closest("tr");
+      const debut = td.querySelector("select.debut");
+      const fin   = td.querySelector("select.fin");
+
+      if(btnVal){
+        // Vérif heures cohérentes
+        if(!debut || !fin || debut.value==="--" || fin.value==="--"){
+          alert("Choisis une heure de début et de fin avant de valider.");
+          return;
+        }
+        if(hhmmToMin(fin.value) <= hhmmToMin(debut.value)){
+          alert("L'heure de fin doit être après l'heure de début.");
+          return;
+        }
+        setStatus(td, "validé");
+      }
+      if(btnRef){
+        setStatus(td, "refusé");
+      }
+      computeRowTotal(tr);
+    });
+
+    // Quand on change les heures (sur une case non validée), on remet "en-attente" et on recalcule
+    document.getElementById("planning").addEventListener("change", (e)=>{
+      const sel = e.target;
+      if(!sel.matches("select.debut, select.fin")) return;
+      const td = sel.closest("td");
+      const tr = sel.closest("tr");
+      const badge = td.querySelector(".statut");
+      if(badge && !badge.classList.contains("validé")){
+        setStatus(td, "en-attente");
+      }
+      computeRowTotal(tr);
+    });
   </script>
 </body>
 </html>
