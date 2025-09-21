@@ -9,64 +9,66 @@
       --bg:#faf7f9; --text:#2b2a2a; --primary:#d81b60; --primary-dark:#a31447;
       --accent:#6a1b9a; --line:#e9d7e5; --card:#ffffff;
       --badge-yellow:#ffd54f; --badge-green:#2e7d32; --badge-red:#c62828;
-      --valid-bg:#c8e6c9; --valid-border:#81c784;
-      --cell-bg:#faf8fc; --cell-border:#eadff0; --col-head:#f3e3ee;
-
+      --col-head:#f3e3ee;
       --page-pad: clamp(8px, 3vw, 24px);
-      --gap: 12px;
-      --top-height: 220px; /* recalculé en JS */
     }
 
     /* base */
-    body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: var(--page-pad); margin:0; }
-    h1 { text-align: center; color:var(--accent); margin:.25rem 0; }
-    #info-semaine { text-align:center; margin-bottom:1rem; color:#544a5d; }
-    .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 1rem; }
+    body { margin:0; font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: var(--page-pad); }
+    h1 { text-align: center; color:var(--accent); margin:.25rem 0 .5rem; }
+    #info-semaine { text-align:center; margin:.35rem 0 1rem; color:#544a5d; font-size: 0.95rem; }
+
+    .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 .9rem; }
     .toolbar button {
-      padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary);
+      padding:.45rem .9rem; border-radius:999px; border:1px solid var(--primary);
       background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
       box-shadow: 0 4px 12px rgba(216,27,96,.15);
+      font-size: 0.95rem;
     }
     .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
 
-    /* ===== Tableau d’édition ===== */
+    /* ===== Tableau ===== */
     .table-wrap{
-      inline-size: 100%;
-      max-inline-size: 100%;
-      block-size: calc(100svh - var(--top-height) - var(--gap) - var(--page-pad));
-      overflow: auto; /* vertical si besoin (pas horizontal) */
+      width: 100%;
       border: 1px solid var(--line);
       border-radius: 12px;
       background: var(--card);
       box-shadow: 0 6px 16px rgba(106,27,154,.06);
+      overflow: hidden;                /* pas de scroll horizontal */
     }
-    .table-wrap table{
+    table{
       width: 100%;
       border-collapse: collapse;
-      table-layout: fixed;   /* compresse les colonnes */
-      margin: 0;
-      border: 0;
-      box-shadow: none;
+      table-layout: fixed;             /* compresse les colonnes selon colgroup */
       background: var(--card);
     }
+
+    /* Largeurs fixées pour tenir sur mobile sans scroll */
+    colgroup col.col-name    { width: 22%; }
+    colgroup col.col-day     { width: 12%; }
+    colgroup col.col-total   { width: 10%; }
+
     th, td { padding: 10px; border: 1px solid var(--line); text-align: center; vertical-align: top; }
     thead th{ position: sticky; top: 0; z-index: 1; background: var(--col-head); color:#3c2a52; }
 
-    select { margin: 0.3rem 0.2rem; padding: 0.6rem; border-radius:10px; border:1px solid var(--line); background:#fff; width:100%; }
-    .horaire-group { display: flex; justify-content: center; align-items: center; gap: 0.25rem; margin-bottom: 0.5rem; }
+    .cell-inner{ display:flex; flex-direction: column; align-items: center; gap: .35rem; }
+    .horaire-group{ display:flex; gap:.25rem; width:100%; justify-content:center; }
+    select { width:100%; padding:.45rem .4rem; border-radius:10px; border:1px solid var(--line); background:#fff; font-size: 0.95rem; }
 
-    .statut { display: inline-block; padding: 0.35rem 0.65rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; }
+    .statut { display:inline-block; padding: .28rem .55rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; white-space: nowrap; }
     .validé { background-color: var(--badge-green); color: white; }
     .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
     .refusé { background-color: var(--badge-red); color: white; }
 
-    .action-btn { font-size: 0.75rem; margin: 0.2rem; padding: 0.35rem 0.6rem; border: none; border-radius: 999px; cursor: pointer; }
+    .actions { display:flex; gap:.35rem; flex-wrap:wrap; justify-content:center; }
+    .action-btn { font-size: 0.8rem; padding: 0.35rem .6rem; border: none; border-radius: 999px; cursor: pointer; }
     .valider-btn { background-color: var(--badge-green); color: white; }
     .refuser-btn { background-color: var(--badge-red); color: white; }
 
     .total { font-weight: bold; white-space:nowrap; }
 
-    td:first-child, th:first-child{ max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    /* Nom long : ellipse */
+    td:first-child, th:first-child{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     /* ========= Planning validé ========= */
     .planning { margin-top: 1rem; }
@@ -76,7 +78,7 @@
     .weekly-grid{
       display:grid;
       grid-template-columns: 140px repeat(5, 1fr);
-      border:1px solid var(--cell-border);
+      border:1px solid var(--line);
       border-radius:12px;
       overflow:hidden;
       background:var(--card);
@@ -85,63 +87,46 @@
     .wg-row{ display: contents; }
     .wg-cell{
       box-sizing: border-box;
-      border-top:1px solid var(--cell-border);
-      border-right:1px solid var(--cell-border);
+      border-top:1px solid var(--line);
+      border-right:1px solid var(--line);
       padding:.6rem .7rem;
-      background:var(--cell-bg);
-      min-height:48px;
+      background:#fff;
+      min-height:44px;
       display:flex; align-items:center; justify-content:center; gap:.35rem;
     }
     .wg-row.header .wg-cell{ background:var(--col-head); color:#3c2a52; font-weight:bold; }
     .weekly-grid .wg-cell:nth-child(6n){ border-right:none; }
-    .pill{
-      display:inline-flex; align-items:center; gap:.4rem;
-      background:var(--valid-bg);
-      border:1px solid var(--valid-border);
-      padding:.28rem .55rem; border-radius:8px; font-weight:600; color:#1b5e20;
-      white-space:nowrap;
-    }
+    .pill{ display:inline-flex; align-items:center; gap:.4rem; background:#eaf6ea; border:1px solid #b9e0b9; padding:.25rem .5rem; border-radius:8px; font-weight:600; color:#1b5e20; white-space:nowrap; }
     .empty{ color:#8b7f92; font-style:italic; }
 
-    /* ======= MODE COMPACT MOBILE (pas de scroll horizontal) ======= */
+    /* ===== MODE COMPACT MOBILE (sans scroll horizontal) ===== */
     @media (max-width: 600px){
-      body{ padding: 8px; }
+      body{ padding: 10px; }
+      h1{ font-size: 20px; }
+      #info-semaine{ font-size: 12.5px; }
 
-      .toolbar button{ padding:.35rem .7rem; font-size:12px; }
-      h1{ font-size: 18px; }
-      #info-semaine{ font-size: 12px; margin-bottom:.6rem; }
+      .toolbar button{ padding:.35rem .65rem; font-size:12px; }
 
-      .table-wrap{ block-size: auto; max-height: none; overflow-x: hidden; } /* pas de scroll horizontal */
-      .table-wrap table{ width: 100%; } /* pas de min-width */
+      th, td { padding: 6px; font-size: 12.5px; }
+      thead th{ font-size: 12px; }
 
-      th, td { padding: 4px; font-size: 11px; }
-      thead th{ font-size: 11px; }
-      thead th:nth-child(2)::after{ content:" (Lun)"; font-size:10px; color:#6b5b7a; }
-      thead th:nth-child(3)::after{ content:" (Mar)"; font-size:10px; color:#6b5b7a; }
-      thead th:nth-child(4)::after{ content:" (Mer)"; font-size:10px; color:#6b5b7a; }
-      thead th:nth-child(5)::after{ content:" (Jeu)"; font-size:10px; color:#6b5b7a; }
-      thead th:nth-child(6)::after{ content:" (Ven)"; font-size:10px; color:#6b5b7a; }
+      /* colonnes resserrées mais lisibles */
+      colgroup col.col-name    { width: 24%; }
+      colgroup col.col-day     { width: 11.5%; }
+      colgroup col.col-total   { width: 8.5%; }
 
-      .horaire-group{ gap:.2rem; margin-bottom:.25rem; }
-      .horaire-group select{
-        width: 64px; min-width: 64px;
-        padding: .2rem .25rem; font-size: 10.5px;
-      }
-      select{ padding:.2rem .25rem; font-size: 10.5px; }
+      .horaire-group{ gap:.2rem; }
+      select{ padding:.25rem .3rem; font-size: 12.5px; }
 
-      .statut{ font-size: 10px; padding:.15rem .4rem; border-radius: 10px; }
-      .total{ font-size: 11px; }
+      .statut{ font-size: 10.5px; padding:.18rem .45rem; border-radius: 12px; }
+      .actions .action-btn{ font-size: 11px; padding:.22rem .45rem; }
+      .total{ font-size: 12.5px; }
 
-      /* Boutons en icônes pour gagner encore de la place */
-      .action-btn{ padding:.2rem .35rem; font-size:0; line-height:1; }
-      .valider-btn::before{ content:"✓"; font-size: 14px; }
-      .refuser-btn::before{ content:"✕"; font-size: 14px; }
-
-      /* Planning compact */
-      .planning .heading small{ font-size: 10px; }
-      .weekly-grid{ grid-template-columns: 92px repeat(5, 1fr); }
-      .wg-cell{ padding:.4rem .45rem; min-height:36px; font-size: 11px; }
-      .pill{ padding:.15rem .35rem; font-size: 11px; }
+      /* planning compact */
+      .planning .heading small{ font-size: 10.5px; }
+      .weekly-grid{ grid-template-columns: 100px repeat(5, 1fr); }
+      .wg-cell{ padding:.45rem .5rem; min-height:36px; font-size: 12px; }
+      .pill{ padding:.15rem .35rem; font-size: 11.5px; }
     }
 
     /* Impression : n'imprimer que la grille */
@@ -168,9 +153,18 @@
     <p id="info-semaine">Chargement...</p>
   </div>
 
-  <!-- Tableau d’édition -->
+  <!-- Tableau -->
   <div class="table-wrap">
     <table id="tableau">
+      <colgroup>
+        <col class="col-name" />
+        <col class="col-day" />
+        <col class="col-day" />
+        <col class="col-day" />
+        <col class="col-day" />
+        <col class="col-day" />
+        <col class="col-total" />
+      </colgroup>
       <thead>
         <tr>
           <th>Prénom</th>
@@ -179,7 +173,7 @@
           <th>Mercredi</th>
           <th>Jeudi</th>
           <th>Vendredi</th>
-          <th>Total validé</th>
+          <th>Total</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -241,14 +235,11 @@
     document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
     document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
 
-    /* -------- Bouton vider semaine -------- */
+    /* -------- Vider semaine (local) -------- */
     document.getElementById("viderSemaine").addEventListener("click", ()=>{
       if (!confirm("Tu veux vraiment vider TOUTE la semaine (en local) ?")) return;
       const all = readAll();
-      if (all[currentWeekKey]) {
-        delete all[currentWeekKey];
-        writeAll(all);
-      }
+      if (all[currentWeekKey]) { delete all[currentWeekKey]; writeAll(all); }
       renderAll();
     });
 
@@ -257,13 +248,20 @@
       if (!debut || !fin || debut==="--"||fin==="--") return 0;
       return hhmmToMin(fin) - hhmmToMin(debut);
     }
-    function createSelects(debut, fin, userKey, jour) {
-      const opts = heures.map(h => `<option value="${h}" ${h===debut?'selected':''}>${h}</option>`).join('');
-      const opts2= heures.map(h => `<option value="${h}" ${h===fin  ?'selected':''}>${h}</option>`).join('');
+    function createCellContent(debut, fin, userKey, jour, statut="en-attente"){
+      const opts  = heures.map(h => `<option value="${h}" ${h===debut?'selected':''}>${h}</option>`).join('');
+      const opts2 = heures.map(h => `<option value="${h}" ${h===fin  ?'selected':''}>${h}</option>`).join('');
       return `
-        <div class="horaire-group">
-          <select data-role="debut" data-user="${userKey}" data-jour="${jour}">${opts}</select>
-          <select data-role="fin"   data-user="${userKey}" data-jour="${jour}">${opts2}</select>
+        <div class="cell-inner">
+          <div class="horaire-group">
+            <select data-role="debut" data-user="${userKey}" data-jour="${jour}">${opts}</select>
+            <select data-role="fin"   data-user="${userKey}" data-jour="${jour}">${opts2}</select>
+          </div>
+          <div class="statut ${statut}">${statut}</div>
+          <div class="actions">
+            <button class='action-btn valider-btn' data-user="${userKey}" data-jour="${jour}">Valider</button>
+            <button class='action-btn refuser-btn' data-user="${userKey}" data-jour="${jour}">Refuser</button>
+          </div>
         </div>`;
     }
 
@@ -311,24 +309,13 @@
       writeAll(all); renderAll();
     }
 
-    /* -------- Fit to viewport (mesure la zone du haut) -------- */
-    function fitTableHeight(){
-      const topZone = document.querySelector('.top-zone');
-      if(!topZone) return;
-      const h = topZone.getBoundingClientRect().height + 8; // petite marge
-      document.documentElement.style.setProperty('--top-height', h + 'px');
-    }
-    window.addEventListener('load', fitTableHeight);
-    window.addEventListener('resize', fitTableHeight);
-
-    /* -------- Rendu principal + planning grille -------- */
+    /* -------- Rendu -------- */
     function renderAll(){
       refreshInfo();
 
       const all = readAll();
       const semaine = all[currentWeekKey] || {};
 
-      // === 1) Tableau d'édition
       tbody.innerHTML = "";
       const lignes = {};
       Object.keys(semaine).forEach(key=>{
@@ -341,7 +328,7 @@
       for (const prenom of prenomsTries){
         const obj = lignes[prenom];
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${prenom}</td>`;
+        tr.innerHTML = `<td title="${prenom}">${prenom}</td>`;
         let totalValide = 0;
         for (const jour of ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"]){
           const hj = obj.jours?.[jour];
@@ -352,19 +339,9 @@
               const d = calculHeure(hj.debut, hj.fin);
               if (d>0) totalValide += d;
             }
-            td.innerHTML = `
-              ${createSelects(hj.debut, hj.fin, obj.key, jour)}
-              <div class="statut ${statut}">${statut}</div>
-              <button class='action-btn valider-btn' data-user="${obj.key}" data-jour="${jour}">Valider</button>
-              <button class='action-btn refuser-btn' data-user="${obj.key}" data-jour="${jour}">Refuser</button>
-            `;
+            td.innerHTML = createCellContent(hj.debut, hj.fin, obj.key, jour, statut);
           } else {
-            td.innerHTML = `
-              ${createSelects("--", "--", obj.key, jour)}
-              <div class="statut en-attente">en-attente</div>
-              <button class='action-btn valider-btn' data-user="${obj.key}" data-jour="${jour}">Valider</button>
-              <button class='action-btn refuser-btn' data-user="${obj.key}" data-jour="${jour}">Refuser</button>
-            `;
+            td.innerHTML = createCellContent("--","--", obj.key, jour, "en-attente");
           }
           tr.appendChild(td);
         }
@@ -372,7 +349,7 @@
         tbody.appendChild(tr);
       }
 
-      // === 2) Planning en grille (validés uniquement)
+      /* Planning validé */
       const dates = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map((_,i)=> {
         const d = addDays(currentMonday, i);
         return `${d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })}`;
@@ -380,7 +357,7 @@
 
       const rows = prenomsTries;
       const getCellContent = (prenom) => {
-        const { key, jours:jj } = lignes[prenom] || {};
+        const { jours:jj } = lignes[prenom] || {};
         return ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map(j=>{
           const h = jj?.[j];
           if (h?.statut === "validé" && h.debut && h.fin){
@@ -409,8 +386,6 @@
       }
 
       planningGrid.innerHTML = gridHTML;
-
-      fitTableHeight();
     }
 
     // init
