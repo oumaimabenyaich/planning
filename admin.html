@@ -29,13 +29,12 @@
     }
     .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
 
-    /* ===== Tableau d’édition dimensionné à la page ===== */
+    /* ===== Tableau d’édition ===== */
     .table-wrap{
       inline-size: 100%;
       max-inline-size: 100%;
       block-size: calc(100svh - var(--top-height) - var(--gap) - var(--page-pad));
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
+      overflow: auto; /* vertical si besoin (pas horizontal) */
       border: 1px solid var(--line);
       border-radius: 12px;
       background: var(--card);
@@ -43,24 +42,15 @@
     }
     .table-wrap table{
       width: 100%;
-      min-width: 980px;               /* >>> force le scroll horizontal sur mobile */
       border-collapse: collapse;
-      table-layout: fixed;
+      table-layout: fixed;   /* compresse les colonnes */
       margin: 0;
       border: 0;
       box-shadow: none;
       background: var(--card);
     }
-    th, td { padding: clamp(6px, 1.2vw, 16px); border: 1px solid var(--line); text-align: center; }
-    thead th{ position: sticky; top: 0; z-index: 3; background: var(--col-head); color:#3c2a52; }
-
-    /* Colonne prénom collante pour rester visible au scroll horizontal */
-    thead th:first-child{ position: sticky; left: 0; z-index: 4; }
-    tbody td:first-child{
-      position: sticky; left: 0; z-index: 2;
-      background: var(--card);
-    }
-    td:first-child, th:first-child{ max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    th, td { padding: 10px; border: 1px solid var(--line); text-align: center; vertical-align: top; }
+    thead th{ position: sticky; top: 0; z-index: 1; background: var(--col-head); color:#3c2a52; }
 
     select { margin: 0.3rem 0.2rem; padding: 0.6rem; border-radius:10px; border:1px solid var(--line); background:#fff; width:100%; }
     .horaire-group { display: flex; justify-content: center; align-items: center; gap: 0.25rem; margin-bottom: 0.5rem; }
@@ -73,17 +63,19 @@
     .action-btn { font-size: 0.75rem; margin: 0.2rem; padding: 0.35rem 0.6rem; border: none; border-radius: 999px; cursor: pointer; }
     .valider-btn { background-color: var(--badge-green); color: white; }
     .refuser-btn { background-color: var(--badge-red); color: white; }
+
     .total { font-weight: bold; white-space:nowrap; }
 
+    td:first-child, th:first-child{ max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
     /* ========= Planning validé ========= */
-    .planning { margin-top: 1rem; overflow:auto; } /* scroll horiz. si besoin */
+    .planning { margin-top: 1rem; }
     .planning .heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
     .planning h2 { margin:0; color:var(--accent); font-size:1.05rem; }
 
     .weekly-grid{
       display:grid;
       grid-template-columns: 140px repeat(5, 1fr);
-      min-width: 720px; /* garde de la lisibilité sur mobile */
       border:1px solid var(--cell-border);
       border-radius:12px;
       overflow:hidden;
@@ -102,7 +94,6 @@
     }
     .wg-row.header .wg-cell{ background:var(--col-head); color:#3c2a52; font-weight:bold; }
     .weekly-grid .wg-cell:nth-child(6n){ border-right:none; }
-
     .pill{
       display:inline-flex; align-items:center; gap:.4rem;
       background:var(--valid-bg);
@@ -112,18 +103,45 @@
     }
     .empty{ color:#8b7f92; font-style:italic; }
 
-    /* --- Version compacte mobile --- */
+    /* ======= MODE COMPACT MOBILE (pas de scroll horizontal) ======= */
     @media (max-width: 600px){
-      th, td { padding: 6px; font-size: 12px; }
-      select { padding: .4rem .35rem; font-size: 12px; }
-      .horaire-group { gap: .25rem; }
-      .horaire-group select { width: 86px; min-width: 86px; } /* 2 petits selects côte à côte */
-      .statut { font-size: 11px; padding: .2rem .45rem; }
+      body{ padding: 8px; }
 
-      /* Remplace le texte des boutons par des icônes ✓ / ✕ */
-      .action-btn{ padding:.28rem .42rem; font-size:0; line-height:1; }
+      .toolbar button{ padding:.35rem .7rem; font-size:12px; }
+      h1{ font-size: 18px; }
+      #info-semaine{ font-size: 12px; margin-bottom:.6rem; }
+
+      .table-wrap{ block-size: auto; max-height: none; overflow-x: hidden; } /* pas de scroll horizontal */
+      .table-wrap table{ width: 100%; } /* pas de min-width */
+
+      th, td { padding: 4px; font-size: 11px; }
+      thead th{ font-size: 11px; }
+      thead th:nth-child(2)::after{ content:" (Lun)"; font-size:10px; color:#6b5b7a; }
+      thead th:nth-child(3)::after{ content:" (Mar)"; font-size:10px; color:#6b5b7a; }
+      thead th:nth-child(4)::after{ content:" (Mer)"; font-size:10px; color:#6b5b7a; }
+      thead th:nth-child(5)::after{ content:" (Jeu)"; font-size:10px; color:#6b5b7a; }
+      thead th:nth-child(6)::after{ content:" (Ven)"; font-size:10px; color:#6b5b7a; }
+
+      .horaire-group{ gap:.2rem; margin-bottom:.25rem; }
+      .horaire-group select{
+        width: 64px; min-width: 64px;
+        padding: .2rem .25rem; font-size: 10.5px;
+      }
+      select{ padding:.2rem .25rem; font-size: 10.5px; }
+
+      .statut{ font-size: 10px; padding:.15rem .4rem; border-radius: 10px; }
+      .total{ font-size: 11px; }
+
+      /* Boutons en icônes pour gagner encore de la place */
+      .action-btn{ padding:.2rem .35rem; font-size:0; line-height:1; }
       .valider-btn::before{ content:"✓"; font-size: 14px; }
       .refuser-btn::before{ content:"✕"; font-size: 14px; }
+
+      /* Planning compact */
+      .planning .heading small{ font-size: 10px; }
+      .weekly-grid{ grid-template-columns: 92px repeat(5, 1fr); }
+      .wg-cell{ padding:.4rem .45rem; min-height:36px; font-size: 11px; }
+      .pill{ padding:.15rem .35rem; font-size: 11px; }
     }
 
     /* Impression : n'imprimer que la grille */
@@ -150,7 +168,7 @@
     <p id="info-semaine">Chargement...</p>
   </div>
 
-  <!-- Tableau d’édition dimensionné -->
+  <!-- Tableau d’édition -->
   <div class="table-wrap">
     <table id="tableau">
       <thead>
@@ -223,7 +241,7 @@
     document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
     document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
 
-    /* -------- Bouton vider semaine (réparé) -------- */
+    /* -------- Bouton vider semaine -------- */
     document.getElementById("viderSemaine").addEventListener("click", ()=>{
       if (!confirm("Tu veux vraiment vider TOUTE la semaine (en local) ?")) return;
       const all = readAll();
@@ -387,12 +405,11 @@
       }
 
       if (rows.length === 0){
-        gridHTML += `<div class="wg-row"><div class="wg-cell">—</div>${["Lundi","Mardi","Jeudi","Vendredi"].map(()=>`<div class="wg-cell empty">Aucune donnée</div>`).join('')}</div>`;
+        gridHTML += `<div class="wg-row"><div class="wg-cell">—</div>${["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map(()=>`<div class="wg-cell empty">Aucune donnée</div>`).join('')}</div>`;
       }
 
       planningGrid.innerHTML = gridHTML;
 
-      // ajuste la hauteur disponible pour le tableau
       fitTableHeight();
     }
 
