@@ -112,7 +112,7 @@
     /* -------- Données & UI -------- */
     const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
     const heures = ["--"];
-    for (let h=10; h<=13; h++){ for (let m of [0,15,30,45]){ if (h===13 && m>30) break; heures.push(`${pad(h)}:${pad(m)}`); } }
+    for (let h=10; h<=14; h++){ for (let m of [0,15,30,45]){ if (h===13 && m>30) break; heures.push(`${pad(h)}:${pad(m)}`); } }
 
     let currentMonday = mondayOf(new Date());
     let currentWeekKey = weekKeyFromMonday(currentMonday);
