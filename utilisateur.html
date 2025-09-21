@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Disponibilités (Local)</title>
+  <title>Disponibilités Hebdomadaires (Local)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
@@ -10,82 +10,32 @@
       --accent:#6a1b9a; --line:#e9d7e5; --card:#ffffff;
       --badge-yellow:#ffd54f; --badge-green:#2e7d32; --badge-red:#c62828;
     }
-
-    body {
-      margin: 0; /* supprime la marge par défaut (mobile) */
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
+    body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: 2rem; display: flex; flex-direction: column; align-items: center; }
     h1 { font-size: 2rem; margin-bottom: .25rem; color:var(--accent); }
-
-    .toolbar {
-      display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; justify-content:center; margin:.5rem 0 1rem;
-    }
+    .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; justify-content:center; margin:.5rem 0 1rem; }
     .toolbar button {
       padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
       box-shadow: 0 4px 12px rgba(216,27,96,.15);
     }
     .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
-
     #info-semaine { margin: .25rem 0 1rem; color:#444; }
-
-    .form-container {
-      background: var(--card); padding: 1.25rem; border-radius: 14px; box-shadow: 0 10px 30px rgba(106,27,154,.08);
-      width: 95%; max-width: 1050px; border:1px solid var(--line);
-    }
-
-    .prenom-input {
-      margin-bottom: 1rem; display: flex; flex-direction: column;
-      /* centrage propre */
-      margin: 0 auto 1rem;
-      max-width: 420px;
-      text-align: center;
-    }
-    .prenom-input label{ text-align: center; }
-    .prenom-input input{ text-align: center; }
-
+    .form-container { background: var(--card); padding: 1.25rem; border-radius: 14px; box-shadow: 0 10px 30px rgba(106,27,154,.08); width: 95%; max-width: 1050px; border:1px solid var(--line); }
+    .prenom-input { margin-bottom: 1rem; display: flex; flex-direction: column; }
     label { font-weight: bold; margin-bottom: 0.5rem; color:var(--accent); }
     input, select { padding: 0.6rem; font-size: 1rem; border-radius: 10px; border: 1px solid var(--line); width: 100%; background:#fff; }
-
     .jours { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
     .jour { background: #fff; padding: 1rem; border-radius: 12px; border: 1px solid var(--line); box-sizing: border-box; }
-
     .statut { margin-top: 0.5rem; display: inline-block; font-weight: bold; font-size: 0.85rem; padding: 0.35rem 0.65rem; border-radius: 999px; }
     .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
     .validé { background-color: var(--badge-green); color: white; }
     .refusé { background-color: var(--badge-red); color: white; }
-
-    .btn {
-      margin-top: 1rem; padding: 0.9rem 2rem; font-size: 1rem; border: 1px solid var(--primary);
-      border-radius: 999px; background-color: var(--primary); color: white; cursor: pointer; transition:.2s;
-      box-shadow: 0 4px 12px rgba(216,27,96,.2);
-    }
+    .btn { margin-top: 1rem; padding: 0.9rem 2rem; font-size: 1rem; border: 1px solid var(--primary); border-radius: 999px; background-color: var(--primary); color: white; cursor: pointer; transition:.2s; box-shadow: 0 4px 12px rgba(216,27,96,.2); }
     .btn:hover { background-color: var(--primary-dark); transform: translateY(-1px); }
-
     .totaux { display:flex; gap:1rem; justify-content:flex-end; margin-top: .9rem; flex-wrap:wrap; }
     .total { font-weight: bold; background:#fff; border:1px solid var(--line); border-radius:999px; padding:.55rem .9rem; }
-
     .note { margin-top: 1rem; color:#666; font-size: 0.9rem; }
-
-    @media (max-width: 900px){
-      .jours{ grid-template-columns: 1fr 1fr; }
-    }
-
-    @media (max-width: 600px){
-      body{
-        justify-content: center;  /* centre verticalement la page */
-        padding: 1rem;
-        min-height: 100svh;       /* plein écran mobile */
-      }
-      .totaux{ justify-content: center; }
-      .jours{ grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px){ .jours{grid-template-columns: 1fr 1fr;} }
+    @media (max-width: 600px){ .jours{grid-template-columns: 1fr;} }
   </style>
 </head>
 <body>
@@ -118,12 +68,18 @@
   </div>
 
   <script>
-    /* -------- Helpers -------- */
+    /* -------- Palette helpers -------- */
     const pad = n => String(n).padStart(2,'0');
     const toHM = (mins) => `${Math.floor(mins/60)} h${mins%60 ? " " + pad(mins%60) : ""}`.replace(" 00","");
     const hhmmToMin = (s) => { const [h,m]=s.split(":").map(Number); return h*60+m; };
 
-    /* -------- Normalisation des noms -------- */
+    /* -------- Normalisation des noms (robuste) --------
+       - trim
+       - compressions espaces
+       - minuscules
+       - suppression des accents
+       => "  Oumaïma  " -> "oumaima"
+    */
     function normalizeKey(name){
       return name.trim()
         .replace(/\s+/g,' ')
@@ -156,12 +112,7 @@
     /* -------- Données & UI -------- */
     const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
     const heures = ["--"];
-    for (let h=10; h<=13; h++){
-      for (let m of [0,15,30,45]){
-        if (h===13 && m>30) break;
-        heures.push(`${pad(h)}:${pad(m)}`);
-      }
-    }
+    for (let h=10; h<=13; h++){ for (let m of [0,15,30,45]){ if (h===13 && m>30) break; heures.push(`${pad(h)}:${pad(m)}`); } }
 
     let currentMonday = mondayOf(new Date());
     let currentWeekKey = weekKeyFromMonday(currentMonday);
