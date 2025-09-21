@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Vue Admin - Edition des horaires (Local)</title>
+  <title>Edition des Horaires</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
@@ -13,126 +13,106 @@
       --page-pad: clamp(8px, 3vw, 24px);
     }
 
-    /* base */
-    body { margin:0; font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: var(--page-pad); }
-    h1 { text-align: center; color:var(--accent); margin:.25rem 0 .5rem; }
-    #info-semaine { text-align:center; margin:.35rem 0 1rem; color:#544a5d; font-size: 0.95rem; }
+    /* Base */
+    body{ margin:0; font-family: Arial, sans-serif; background:var(--bg); color:var(--text); padding:var(--page-pad); }
+    h1{ text-align:center; color:var(--accent); margin:.25rem 0 .6rem; }
+    #info-semaine{ text-align:center; margin:.35rem 0 1rem; color:#544a5d; font-size:.95rem; }
 
-    .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 .9rem; }
-    .toolbar button {
+    .toolbar{ display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; margin:.25rem 0 .9rem; }
+    .toolbar button{
       padding:.45rem .9rem; border-radius:999px; border:1px solid var(--primary);
       background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
-      box-shadow: 0 4px 12px rgba(216,27,96,.15);
-      font-size: 0.95rem;
+      box-shadow:0 4px 12px rgba(216,27,96,.15); font-size:.95rem;
     }
-    .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
+    .toolbar button:hover{ background:var(--primary-dark); transform:translateY(-1px); }
 
-    /* ===== Tableau ===== */
+    /* Tableau */
     .table-wrap{
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: var(--card);
-      box-shadow: 0 6px 16px rgba(106,27,154,.06);
-      overflow: hidden;                /* pas de scroll horizontal */
+      width:100%; border:1px solid var(--line); border-radius:12px; background:var(--card);
+      box-shadow:0 6px 16px rgba(106,27,154,.06); overflow:hidden;
     }
-    table{
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;             /* compresse les colonnes selon colgroup */
-      background: var(--card);
+    table{ width:100%; border-collapse:collapse; table-layout:fixed; }
+    /* Largeurs fixées (sans scroll horizontal) */
+    colgroup col.col-name{ width:24%; }
+    colgroup col.col-day{ width:12%; }
+    colgroup col.col-total{ width:8%; }
+
+    th,td{ padding:10px; border:1px solid var(--line); text-align:center; vertical-align:top; }
+    thead th{ position:sticky; top:0; z-index:1; background:var(--col-head); color:#3c2a52; }
+
+    /* Cellule jour */
+    .cell-inner{ display:flex; flex-direction:column; align-items:center; gap:.35rem; }
+    .times{ width:100%; display:flex; flex-direction:column; gap:.25rem; }
+    .t-in{
+      width:100%; height:32px; padding:0 .4rem; border:1px solid var(--line); border-radius:10px; background:#fff;
+      font-size:14px; color:#222;
+      min-width:0;
     }
+    .t-in::-webkit-date-and-time-value{ text-align:center; } /* iOS lisible */
 
-    /* Largeurs fixées pour tenir sur mobile sans scroll */
-    colgroup col.col-name    { width: 22%; }
-    colgroup col.col-day     { width: 12%; }
-    colgroup col.col-total   { width: 10%; }
+    .statut{ display:inline-block; padding:.22rem .5rem; border-radius:999px; font-size:.85rem; font-weight:700; white-space:nowrap; }
+    .validé{ background:var(--badge-green); color:#fff; }
+    .en-attente{ background:var(--badge-yellow); color:#4e3b00; }
+    .refusé{ background:var(--badge-red); color:#fff; }
 
-    th, td { padding: 10px; border: 1px solid var(--line); text-align: center; vertical-align: top; }
-    thead th{ position: sticky; top: 0; z-index: 1; background: var(--col-head); color:#3c2a52; }
+    .actions{ display:flex; gap:.35rem; flex-wrap:wrap; justify-content:center; }
+    .action-btn{ padding:.28rem .55rem; border:none; border-radius:999px; cursor:pointer; font-size:.9rem; }
+    .valider-btn{ background:var(--badge-green); color:#fff; }
+    .refuser-btn{ background:var(--badge-red); color:#fff; }
 
-    .cell-inner{ display:flex; flex-direction: column; align-items: center; gap: .35rem; }
-    .horaire-group{ display:flex; gap:.25rem; width:100%; justify-content:center; }
-    select { width:100%; padding:.45rem .4rem; border-radius:10px; border:1px solid var(--line); background:#fff; font-size: 0.95rem; }
-
-    .statut { display:inline-block; padding: .28rem .55rem; border-radius: 999px; font-size: 0.85rem; font-weight: bold; white-space: nowrap; }
-    .validé { background-color: var(--badge-green); color: white; }
-    .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
-    .refusé { background-color: var(--badge-red); color: white; }
-
-    .actions { display:flex; gap:.35rem; flex-wrap:wrap; justify-content:center; }
-    .action-btn { font-size: 0.8rem; padding: 0.35rem .6rem; border: none; border-radius: 999px; cursor: pointer; }
-    .valider-btn { background-color: var(--badge-green); color: white; }
-    .refuser-btn { background-color: var(--badge-red); color: white; }
-
-    .total { font-weight: bold; white-space:nowrap; }
-
-    /* Nom long : ellipse */
+    .total{ font-weight:700; white-space:nowrap; }
     td:first-child, th:first-child{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-    /* ========= Planning validé ========= */
-    .planning { margin-top: 1rem; }
-    .planning .heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
-    .planning h2 { margin:0; color:var(--accent); font-size:1.05rem; }
-
+    /* Planning validé */
+    .planning{ margin-top:1rem; }
+    .planning .heading{ display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+    .planning h2{ margin:0; color:var(--accent); font-size:1.05rem; }
     .weekly-grid{
-      display:grid;
-      grid-template-columns: 140px repeat(5, 1fr);
-      border:1px solid var(--line);
-      border-radius:12px;
-      overflow:hidden;
-      background:var(--card);
-      box-shadow: 0 10px 30px rgba(106,27,154,.08);
+      display:grid; grid-template-columns: 120px repeat(5,1fr);
+      border:1px solid var(--line); border-radius:12px; background:var(--card);
+      box-shadow:0 10px 30px rgba(106,27,154,.08); overflow:hidden;
     }
-    .wg-row{ display: contents; }
+    .wg-row{ display:contents; }
     .wg-cell{
-      box-sizing: border-box;
-      border-top:1px solid var(--line);
-      border-right:1px solid var(--line);
-      padding:.6rem .7rem;
-      background:#fff;
-      min-height:44px;
-      display:flex; align-items:center; justify-content:center; gap:.35rem;
+      border-top:1px solid var(--line); border-right:1px solid var(--line);
+      padding:.5rem .6rem; min-height:40px; display:flex; align-items:center; justify-content:center; gap:.35rem;
     }
-    .wg-row.header .wg-cell{ background:var(--col-head); color:#3c2a52; font-weight:bold; }
+    .wg-row.header .wg-cell{ background:var(--col-head); color:#3c2a52; font-weight:700; }
     .weekly-grid .wg-cell:nth-child(6n){ border-right:none; }
-    .pill{ display:inline-flex; align-items:center; gap:.4rem; background:#eaf6ea; border:1px solid #b9e0b9; padding:.25rem .5rem; border-radius:8px; font-weight:600; color:#1b5e20; white-space:nowrap; }
+    .pill{ display:inline-flex; align-items:center; gap:.4rem; background:#eaf6ea; border:1px solid #b9e0b9; padding:.2rem .45rem; border-radius:8px; font-weight:600; color:#1b5e20; white-space:nowrap; }
     .empty{ color:#8b7f92; font-style:italic; }
 
-    /* ===== MODE COMPACT MOBILE (sans scroll horizontal) ===== */
-    @media (max-width: 600px){
-      body{ padding: 10px; }
-      h1{ font-size: 20px; }
-      #info-semaine{ font-size: 12.5px; }
+    /* Mobile compact (375–430px) : lisible sans scroll horizontal */
+    @media (max-width:600px){
+      body{ padding:10px; }
+      h1{ font-size:20px; }
+      #info-semaine{ font-size:12.5px; }
 
       .toolbar button{ padding:.35rem .65rem; font-size:12px; }
 
-      th, td { padding: 6px; font-size: 12.5px; }
-      thead th{ font-size: 12px; }
+      th,td{ padding:6px; font-size:12.5px; }
+      thead th{ font-size:12px; }
 
-      /* colonnes resserrées mais lisibles */
-      colgroup col.col-name    { width: 24%; }
-      colgroup col.col-day     { width: 11.5%; }
-      colgroup col.col-total   { width: 8.5%; }
+      /* Largeurs resserrées mais lisibles */
+      colgroup col.col-name{ width:26%; }
+      colgroup col.col-day{ width:11.6%; }
+      colgroup col.col-total{ width:6.8%; }
 
-      .horaire-group{ gap:.2rem; }
-      select{ padding:.25rem .3rem; font-size: 12.5px; }
+      .t-in{ height:30px; font-size:13px; }
+      .statut{ font-size:10.5px; padding:.16rem .4rem; border-radius:12px; }
+      .actions .action-btn{ font-size:0; padding:.22rem .42rem; }
+      .valider-btn::before{ content:"✓"; font-size:15px; }
+      .refuser-btn::before{ content:"✕"; font-size:15px; }
 
-      .statut{ font-size: 10.5px; padding:.18rem .45rem; border-radius: 12px; }
-      .actions .action-btn{ font-size: 11px; padding:.22rem .45rem; }
-      .total{ font-size: 12.5px; }
-
-      /* planning compact */
-      .planning .heading small{ font-size: 10.5px; }
-      .weekly-grid{ grid-template-columns: 100px repeat(5, 1fr); }
-      .wg-cell{ padding:.45rem .5rem; min-height:36px; font-size: 12px; }
-      .pill{ padding:.15rem .35rem; font-size: 11.5px; }
+      .weekly-grid{ grid-template-columns: 92px repeat(5,1fr); }
+      .wg-cell{ padding:.4rem .45rem; min-height:34px; font-size:12px; }
+      .pill{ padding:.12rem .3rem; font-size:11.5px; }
     }
 
-    /* Impression : n'imprimer que la grille */
+    /* Impression : grille propre */
     @media print{
       body{ background:#fff; padding:0; }
-      .toolbar, .table-wrap, #info-semaine, h1 { display:none !important; }
+      .toolbar, .table-wrap, #info-semaine, h1{ display:none !important; }
       .planning{ margin:0; box-shadow:none; }
       .weekly-grid{ border:none; }
       .wg-cell{ background:#fff; }
@@ -190,205 +170,179 @@
   </section>
 
   <script>
-    /* -------- Helpers -------- */
+    /* Helpers */
     const pad = n => String(n).padStart(2,'0');
     const hhmmToMin = s => { const [h,m]=s.split(":").map(Number); return h*60+m; };
     const toHM = mins => `${Math.floor(mins/60)} h${mins%60 ? " " + pad(mins%60) : ""}`.replace(" 00","");
-    function mondayOf(date){ const d = new Date(date); d.setHours(0,0,0,0); const day = d.getDay(); const diff = (day===0?-6:1-day); d.setDate(d.getDate()+diff); return d; }
+    function mondayOf(date){ const d=new Date(date); d.setHours(0,0,0,0); const day=d.getDay(); const diff=(day===0?-6:1-day); d.setDate(d.getDate()+diff); return d; }
     function weekKeyFromMonday(mon){ return `${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`; }
     function addDays(d,n){ const x=new Date(d); x.setDate(d.getDate()+n); return x; }
     function addWeeks(d,n){ return addDays(d,7*n); }
     function labelSemaine(mon){ const ven=new Date(mon); ven.setDate(mon.getDate()+4); return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`; }
 
-    /* -------- Storage -------- */
-    const LS_KEY = "disponibilites_local";
-    const readAll = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)||"{}"); } catch { return {}; } };
-    const writeAll = (obj) => localStorage.setItem(LS_KEY, JSON.stringify(obj));
+    /* Storage */
+    const LS_KEY="disponibilites_local";
+    const readAll=()=>{ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"{}"); }catch{ return {}; } };
+    const writeAll=obj=>localStorage.setItem(LS_KEY, JSON.stringify(obj));
 
-    /* -------- UI refs -------- */
-    const infoSemaine = document.getElementById("info-semaine");
-    const tbody = document.querySelector("#tableau tbody");
-    const planningTitle = document.getElementById("planning-title");
-    const planningGrid = document.getElementById("planning-grid");
+    /* Refs */
+    const infoSemaine=document.getElementById("info-semaine");
+    const tbody=document.querySelector("#tableau tbody");
+    const planningTitle=document.getElementById("planning-title");
+    const planningGrid=document.getElementById("planning-grid");
 
-    /* -------- Semaine courante -------- */
-    let currentMonday = mondayOf(new Date());
-    let currentWeekKey = weekKeyFromMonday(currentMonday);
+    /* Semaine courante */
+    let currentMonday=mondayOf(new Date());
+    let currentWeekKey=weekKeyFromMonday(currentMonday);
 
-    const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
-    const heures = ["--"];
-    for (let h=10; h<=13; h++){
-      for (let m of [0,15,30,45]){
-        if (h===13 && m>30) break;
-        heures.push(`${pad(h)}:${pad(m)}`);
-      }
-    }
+    const jours=["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
 
     function refreshInfo(){
-      infoSemaine.textContent = labelSemaine(currentMonday);
-      const ven = addDays(currentMonday,4);
-      planningTitle.textContent = `Planning validé — du ${currentMonday.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`;
+      infoSemaine.textContent=labelSemaine(currentMonday);
+      const ven=addDays(currentMonday,4);
+      planningTitle.textContent=`Planning validé — du ${currentMonday.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`;
     }
 
-    /* -------- Navigation -------- */
+    /* Navigation */
     document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
     document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday, 1); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
     document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); renderAll(); });
-
-    /* -------- Vider semaine (local) -------- */
     document.getElementById("viderSemaine").addEventListener("click", ()=>{
-      if (!confirm("Tu veux vraiment vider TOUTE la semaine (en local) ?")) return;
-      const all = readAll();
-      if (all[currentWeekKey]) { delete all[currentWeekKey]; writeAll(all); }
-      renderAll();
+      if(!confirm("Tu veux vraiment vider TOUTE la semaine (en local) ?")) return;
+      const all=readAll(); if(all[currentWeekKey]){ delete all[currentWeekKey]; writeAll(all); } renderAll();
     });
 
-    /* -------- Calculs -------- */
-    function calculHeure(debut, fin) {
-      if (!debut || !fin || debut==="--"||fin==="--") return 0;
-      return hhmmToMin(fin) - hhmmToMin(debut);
+    /* Calculs */
+    function calculHeure(debut, fin){ if(!debut||!fin) return 0; return hhmmToMin(fin)-hhmmToMin(debut); }
+
+    function timeInput(value, role, userKey, jour){
+      const v = (value && value!=="--") ? value : "";
+      return `<input type="time" class="t-in" step="900" min="10:00" max="13:30" value="${v}" data-role="${role}" data-user="${userKey}" data-jour="${jour}" />`;
     }
+
     function createCellContent(debut, fin, userKey, jour, statut="en-attente"){
-      const opts  = heures.map(h => `<option value="${h}" ${h===debut?'selected':''}>${h}</option>`).join('');
-      const opts2 = heures.map(h => `<option value="${h}" ${h===fin  ?'selected':''}>${h}</option>`).join('');
       return `
         <div class="cell-inner">
-          <div class="horaire-group">
-            <select data-role="debut" data-user="${userKey}" data-jour="${jour}">${opts}</select>
-            <select data-role="fin"   data-user="${userKey}" data-jour="${jour}">${opts2}</select>
+          <div class="times">
+            ${timeInput(debut, "debut", userKey, jour)}
+            ${timeInput(fin,   "fin",   userKey, jour)}
           </div>
           <div class="statut ${statut}">${statut}</div>
           <div class="actions">
-            <button class='action-btn valider-btn' data-user="${userKey}" data-jour="${jour}">Valider</button>
-            <button class='action-btn refuser-btn' data-user="${userKey}" data-jour="${jour}">Refuser</button>
+            <button class="action-btn valider-btn" data-user="${userKey}" data-jour="${jour}">Valider</button>
+            <button class="action-btn refuser-btn" data-user="${userKey}" data-jour="${jour}">Refuser</button>
           </div>
         </div>`;
     }
 
-    /* -------- Délégation d'événements -------- */
+    /* Délégation d'événements */
     tbody.addEventListener("change", (e)=>{
-      const sel = e.target;
-      if (sel.matches("select[data-role]")){
-        const role = sel.getAttribute("data-role");
-        const userKey = sel.getAttribute("data-user");
-        const jour = sel.getAttribute("data-jour");
-        updateHeure(userKey, jour, role, sel.value);
+      const el=e.target;
+      if(el.matches('input[type="time"][data-role]')){
+        const role=el.dataset.role, userKey=el.dataset.user, jour=el.dataset.jour;
+        updateHeure(userKey, jour, role, el.value || null);
       }
     });
     tbody.addEventListener("click", (e)=>{
-      const vb = e.target.closest(".valider-btn");
-      const rb = e.target.closest(".refuser-btn");
-      if (vb){ valider(vb.dataset.user, vb.dataset.jour); }
-      if (rb){ refuser(rb.dataset.user, rb.dataset.jour); }
+      const vb=e.target.closest(".valider-btn");
+      const rb=e.target.closest(".refuser-btn");
+      if(vb) valider(vb.dataset.user, vb.dataset.jour);
+      if(rb) refuser(rb.dataset.user, rb.dataset.jour);
     });
 
     function updateHeure(userKey, jour, type, value){
-      const all = readAll();
-      const rec = all?.[currentWeekKey]?.[userKey];
-      if (!rec) return;
-      if (!rec.jours) rec.jours={};
-      if (!rec.jours[jour]) rec.jours[jour] = { statut:"en-attente" };
-      rec.jours[jour][type] = value;
-      writeAll(all);
-      renderAll();
+      const all=readAll(); const rec=all?.[currentWeekKey]?.[userKey]; if(!rec) return;
+      if(!rec.jours) rec.jours={}; if(!rec.jours[jour]) rec.jours[jour]={ statut:"en-attente" };
+      rec.jours[jour][type]=value;
+      writeAll(all); renderAll();
     }
     function valider(userKey, jour){
-      const all = readAll();
-      const rec = all?.[currentWeekKey]?.[userKey];
-      if (!rec) return;
-      if (!rec.jours?.[jour]) rec.jours[jour] = {};
-      rec.jours[jour].statut = "validé";
+      const all=readAll(); const rec=all?.[currentWeekKey]?.[userKey]; if(!rec) return;
+      if(!rec.jours?.[jour]) rec.jours[jour]={};
+      rec.jours[jour].statut="validé";
       writeAll(all); renderAll();
     }
     function refuser(userKey, jour){
-      const all = readAll();
-      const rec = all?.[currentWeekKey]?.[userKey];
-      if (!rec) return;
-      if (!rec.jours?.[jour]) rec.jours[jour] = {};
-      rec.jours[jour].statut = "refusé";
+      const all=readAll(); const rec=all?.[currentWeekKey]?.[userKey]; if(!rec) return;
+      if(!rec.jours?.[jour]) rec.jours[jour]={};
+      rec.jours[jour].statut="refusé";
       writeAll(all); renderAll();
     }
 
-    /* -------- Rendu -------- */
+    /* Rendu */
     function renderAll(){
       refreshInfo();
 
-      const all = readAll();
-      const semaine = all[currentWeekKey] || {};
+      const all=readAll();
+      const semaine=all[currentWeekKey] || {};
 
-      tbody.innerHTML = "";
-      const lignes = {};
+      tbody.innerHTML="";
+      const lignes={};
       Object.keys(semaine).forEach(key=>{
-        const rec = semaine[key];
-        const prenom = (rec.prenom||key).trim();
-        if (!lignes[prenom]) lignes[prenom] = { key, jours: rec.jours||{} };
+        const rec=semaine[key];
+        const prenom=(rec.prenom||key).trim();
+        if(!lignes[prenom]) lignes[prenom]={ key, jours: rec.jours||{} };
       });
       const prenomsTries = Object.keys(lignes).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
 
-      for (const prenom of prenomsTries){
-        const obj = lignes[prenom];
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td title="${prenom}">${prenom}</td>`;
-        let totalValide = 0;
-        for (const jour of ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"]){
-          const hj = obj.jours?.[jour];
-          const td = document.createElement("td");
-          if (hj && hj.debut && hj.fin){
-            const statut = hj.statut || "en-attente";
-            if (statut === "validé"){
-              const d = calculHeure(hj.debut, hj.fin);
-              if (d>0) totalValide += d;
+      for(const prenom of prenomsTries){
+        const obj=lignes[prenom];
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td title="${prenom}">${prenom}</td>`;
+        let totalValide=0;
+        for(const jour of jours){
+          const hj=obj.jours?.[jour];
+          const td=document.createElement("td");
+          if(hj && hj.debut && hj.fin){
+            const statut=hj.statut || "en-attente";
+            if(statut==="validé"){
+              const d=calculHeure(hj.debut, hj.fin);
+              if(d>0) totalValide+=d;
             }
-            td.innerHTML = createCellContent(hj.debut, hj.fin, obj.key, jour, statut);
+            td.innerHTML=createCellContent(hj.debut, hj.fin, obj.key, jour, statut);
           } else {
-            td.innerHTML = createCellContent("--","--", obj.key, jour, "en-attente");
+            td.innerHTML=createCellContent(null, null, obj.key, jour, "en-attente");
           }
           tr.appendChild(td);
         }
-        tr.innerHTML += `<td class="total">${toHM(totalValide)}</td>`;
+        tr.innerHTML+=`<td class="total">${toHM(totalValide)}</td>`;
         tbody.appendChild(tr);
       }
 
       /* Planning validé */
-      const dates = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map((_,i)=> {
+      const dates = jours.map((_,i)=> {
         const d = addDays(currentMonday, i);
         return `${d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit' })}`;
       });
 
-      const rows = prenomsTries;
-      const getCellContent = (prenom) => {
-        const { jours:jj } = lignes[prenom] || {};
-        return ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map(j=>{
-          const h = jj?.[j];
-          if (h?.statut === "validé" && h.debut && h.fin){
-            return `<span class="pill">${h.debut}–${h.fin}</span>`;
-          }
+      const rows=prenomsTries;
+      const getCellContent=(prenom)=>{
+        const { jours:jj }=lignes[prenom] || {};
+        return jours.map(j=>{
+          const h=jj?.[j];
+          if(h?.statut==="validé" && h.debut && h.fin){ return `<span class="pill">${h.debut}–${h.fin}</span>`; }
           return `<span class="empty">—</span>`;
         });
       };
 
-      let gridHTML = '';
-      gridHTML += `<div class="wg-row header">
+      let gridHTML='';
+      gridHTML+=`<div class="wg-row header">
         <div class="wg-cell">Personnel</div>
-        ${["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map((j,idx)=>`<div class="wg-cell">${j}<br><small>${dates[idx]}</small></div>`).join('')}
+        ${jours.map((j,idx)=>`<div class="wg-cell">${j}<br><small>${dates[idx]}</small></div>`).join('')}
       </div>`;
-
-      for (const prenom of rows){
-        const cells = getCellContent(prenom);
-        gridHTML += `<div class="wg-row">
+      for(const prenom of rows){
+        const cells=getCellContent(prenom);
+        gridHTML+=`<div class="wg-row">
           <div class="wg-cell">${prenom}</div>
           ${cells.map(c=>`<div class="wg-cell">${c}</div>`).join('')}
         </div>`;
       }
-
-      if (rows.length === 0){
-        gridHTML += `<div class="wg-row"><div class="wg-cell">—</div>${["Lundi","Mardi","Mercredi","Jeudi","Vendredi"].map(()=>`<div class="wg-cell empty">Aucune donnée</div>`).join('')}</div>`;
+      if(rows.length===0){
+        gridHTML+=`<div class="wg-row"><div class="wg-cell">—</div>${jours.map(()=>`<div class="wg-cell empty">Aucune donnée</div>`).join('')}</div>`;
       }
-
-      planningGrid.innerHTML = gridHTML;
+      planningGrid.innerHTML=gridHTML;
     }
 
-    // init
     renderAll();
   </script>
 </body>
