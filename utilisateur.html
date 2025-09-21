@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Disponibilités Hebdomadaires (Local)</title>
+  <title>Disponibilités (Local)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root{
@@ -12,34 +12,59 @@
     }
     body { font-family: Arial, sans-serif; background: var(--bg); color:var(--text); padding: 2rem; display: flex; flex-direction: column; align-items: center; }
     h1 { font-size: 2rem; margin-bottom: .25rem; color:var(--accent); }
+
     .toolbar { display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; justify-content:center; margin:.5rem 0 1rem; }
     .toolbar button {
       padding:.5rem .9rem; border-radius:999px; border:1px solid var(--primary); background:var(--primary); color:#fff; cursor:pointer; transition:.2s;
       box-shadow: 0 4px 12px rgba(216,27,96,.15);
     }
     .toolbar button:hover { background:var(--primary-dark); transform: translateY(-1px); }
+
     #info-semaine { margin: .25rem 0 1rem; color:#444; }
+
     .form-container { background: var(--card); padding: 1.25rem; border-radius: 14px; box-shadow: 0 10px 30px rgba(106,27,154,.08); width: 95%; max-width: 1050px; border:1px solid var(--line); }
-    .prenom-input { margin-bottom: 1rem; display: flex; flex-direction: column; }
+
+    /* === CENTRAGE propre du bloc Prénom === */
+    .prenom-input {
+      width: 100%;
+      max-width: 420px;       /* largeur confortable */
+      margin: 0 auto 1rem;    /* centre horizontalement */
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .prenom-input label { text-align: center; }  /* centre le libellé */
+    .prenom-input input {
+      width: 100%;
+      text-align: center;      /* centre le texte dans le champ (optionnel, joli) */
+    }
+
     label { font-weight: bold; margin-bottom: 0.5rem; color:var(--accent); }
-    input, select { padding: 0.6rem; font-size: 1rem; border-radius: 10px; border: 1px solid var(--line); width: 100%; background:#fff; }
+    input, select { padding: 0.6rem; font-size: 1rem; border-radius: 10px; border: 1px solid var(--line); background:#fff; }
+
     .jours { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
     .jour { background: #fff; padding: 1rem; border-radius: 12px; border: 1px solid var(--line); box-sizing: border-box; }
     .statut { margin-top: 0.5rem; display: inline-block; font-weight: bold; font-size: 0.85rem; padding: 0.35rem 0.65rem; border-radius: 999px; }
     .en-attente { background-color: var(--badge-yellow); color: #4e3b00; }
     .validé { background-color: var(--badge-green); color: white; }
     .refusé { background-color: var(--badge-red); color: white; }
+
     .btn { margin-top: 1rem; padding: 0.9rem 2rem; font-size: 1rem; border: 1px solid var(--primary); border-radius: 999px; background-color: var(--primary); color: white; cursor: pointer; transition:.2s; box-shadow: 0 4px 12px rgba(216,27,96,.2); }
     .btn:hover { background-color: var(--primary-dark); transform: translateY(-1px); }
+
     .totaux { display:flex; gap:1rem; justify-content:flex-end; margin-top: .9rem; flex-wrap:wrap; }
     .total { font-weight: bold; background:#fff; border:1px solid var(--line); border-radius:999px; padding:.55rem .9rem; }
     .note { margin-top: 1rem; color:#666; font-size: 0.9rem; }
+
     @media (max-width: 900px){ .jours{grid-template-columns: 1fr 1fr;} }
-    @media (max-width: 600px){ .jours{grid-template-columns: 1fr;} }
+    @media (max-width: 600px){
+      .jours{grid-template-columns: 1fr;}
+      .totaux{justify-content:center;} /* lisible sur mobile */
+    }
   </style>
 </head>
 <body>
-  <h1>Disponibilités Hebdomadaires</h1>
+  <h1>Disponibilités</h1>
 
   <div class="toolbar">
     <button id="prevWeek">⟵ Semaine précédente</button>
@@ -51,7 +76,7 @@
 
   <div class="form-container">
     <div class="prenom-input">
-      <label for="prenom">Prénom :</label>
+      <label for="prenom">Prénom</label>
       <input type="text" id="prenom" autocomplete="given-name" />
     </div>
 
@@ -67,63 +92,34 @@
     <div class="note">Yo l'équipe.</div>
   </div>
 
+  <!-- JS inchangé -->
   <script>
-    /* -------- Palette helpers -------- */
     const pad = n => String(n).padStart(2,'0');
     const toHM = (mins) => `${Math.floor(mins/60)} h${mins%60 ? " " + pad(mins%60) : ""}`.replace(" 00","");
     const hhmmToMin = (s) => { const [h,m]=s.split(":").map(Number); return h*60+m; };
+    function normalizeKey(name){ return name.trim().replace(/\s+/g,' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+    function mondayOf(date){ const d=new Date(date); d.setHours(0,0,0,0); const day=d.getDay(); const diff=(day===0?-6:1-day); d.setDate(d.getDate()+diff); return d; }
+    function weekKeyFromMonday(mon){ return `${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`; }
+    function labelSemaine(mon){ const ven=new Date(mon); ven.setDate(mon.getDate()+4); return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`; }
+    function addDays(d,n){ const x=new Date(d); x.setDate(d.getDate()+n); return x; }
+    function addWeeks(d,n){ return addDays(d, n*7); }
+    const LS_KEY="disponibilites_local";
+    const readAll=()=>{ try { return JSON.parse(localStorage.getItem(LS_KEY)||"{}"); } catch { return {}; } };
+    const writeAll=obj=>localStorage.setItem(LS_KEY, JSON.stringify(obj));
 
-    /* -------- Normalisation des noms (robuste) --------
-       - trim
-       - compressions espaces
-       - minuscules
-       - suppression des accents
-       => "  Oumaïma  " -> "oumaima"
-    */
-    function normalizeKey(name){
-      return name.trim()
-        .replace(/\s+/g,' ')
-        .toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    }
+    const jours=["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
+    const heures=["--"]; for(let h=10; h<=13; h++){ for(let m of [0,15,30,45]){ if(h===13 && m>30) break; heures.push(`${pad(h)}:${pad(m)}`); } }
 
-    function mondayOf(date){
-      const d = new Date(date); d.setHours(0,0,0,0);
-      const day = d.getDay(); // 0 dim ... 1 lun
-      const diff = (day === 0 ? -6 : 1 - day);
-      d.setDate(d.getDate()+diff);
-      return d;
-    }
-    function weekKeyFromMonday(mon){
-      return `${mon.getFullYear()}-${pad(mon.getMonth()+1)}-${pad(mon.getDate())}`;
-    }
-    function labelSemaine(mon){
-      const ven = new Date(mon); ven.setDate(mon.getDate()+4);
-      return `📅 du ${mon.toLocaleDateString('fr-FR')} au ${ven.toLocaleDateString('fr-FR')}`;
-    }
-    function addDays(d, n){ const x=new Date(d); x.setDate(d.getDate()+n); return x; }
-    function addWeeks(d, n){ return addDays(d, n*7); }
+    let currentMonday=mondayOf(new Date());
+    let currentWeekKey=weekKeyFromMonday(currentMonday);
+    const infoSemaine=document.getElementById("info-semaine");
 
-    /* -------- LocalStorage -------- */
-    const LS_KEY = "disponibilites_local";
-    const readAll = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)||"{}"); } catch { return {}; } };
-    const writeAll = (obj) => localStorage.setItem(LS_KEY, JSON.stringify(obj));
-
-    /* -------- Données & UI -------- */
-    const jours = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
-    const heures = ["--"];
-    for (let h=10; h<=13; h++){ for (let m of [0,15,30,45]){ if (h===13 && m>30) break; heures.push(`${pad(h)}:${pad(m)}`); } }
-
-    let currentMonday = mondayOf(new Date());
-    let currentWeekKey = weekKeyFromMonday(currentMonday);
-    const infoSemaine = document.getElementById("info-semaine");
-
-    const selects = {};
-    const container = document.getElementById("jours");
+    const selects={};
+    const container=document.getElementById("jours");
     jours.forEach(j=>{
-      const div = document.createElement("div");
-      div.className = "jour";
-      div.innerHTML = `
+      const div=document.createElement("div");
+      div.className="jour";
+      div.innerHTML=`
         <strong>${j}</strong><br/>
         Début :
         <select class="debut" id="${j}-debut"></select><br/>
@@ -132,69 +128,31 @@
         <span id="${j}-statut" class="statut en-attente">en-attente</span>
       `;
       container.appendChild(div);
-      selects[j] = {
-        debut: div.querySelector(".debut"),
-        fin: div.querySelector(".fin"),
-        statut: div.querySelector(".statut")
-      };
+      selects[j]={ debut:div.querySelector(".debut"), fin:div.querySelector(".fin"), statut:div.querySelector(".statut") };
     });
-    for(const j of jours){
-      for(const h of heures){
-        selects[j].debut.insertAdjacentHTML("beforeend", `<option value="${h}">${h}</option>`);
-        selects[j].fin.insertAdjacentHTML("beforeend", `<option value="${h}">${h}</option>`);
-      }
-    }
+    for(const j of jours){ for(const h of heures){ selects[j].debut.insertAdjacentHTML("beforeend", `<option value="${h}">${h}</option>`); selects[j].fin.insertAdjacentHTML("beforeend", `<option value="${h}">${h}</option>`); } }
 
-    function durationMinutes(d,f){
-      if (!d || !f || d==="--" || f==="--") return 0;
-      return hhmmToMin(f) - hhmmToMin(d);
-    }
-    function computeTotalSaisi(){
-      let mins=0;
-      for(const j of jours){
-        const d = selects[j].debut.value;
-        const f = selects[j].fin.value;
-        const m = durationMinutes(d,f);
-        if (m >= 30) mins += m;
-      }
-      return mins;
-    }
-    function computeTotalValide(horaires={}){
-      let mins=0;
-      for(const j of jours){
-        const hj = horaires[j];
-        if (hj?.statut === "validé" && hj.debut && hj.fin){
-          const m = durationMinutes(hj.debut, hj.fin);
-          if (m>0) mins += m;
-        }
-      }
-      return mins;
-    }
-    function updateTotals(horaires) {
-      document.getElementById("total-saisi").textContent = `Total saisi : ${toHM(computeTotalSaisi())}`;
-      document.getElementById("total-valide").textContent = `Total validé : ${toHM(computeTotalValide(horaires))}`;
-    }
-
-    function refreshInfo(){
-      infoSemaine.textContent = labelSemaine(currentMonday);
-    }
+    function durationMinutes(d,f){ if(!d||!f||d==="--"||f==="--") return 0; return hhmmToMin(f)-hhmmToMin(d); }
+    function computeTotalSaisi(){ let mins=0; for(const j of jours){ const d=selects[j].debut.value; const f=selects[j].fin.value; const m=durationMinutes(d,f); if(m>=30) mins+=m; } return mins; }
+    function computeTotalValide(horaires={}){ let mins=0; for(const j of jours){ const hj=horaires[j]; if(hj?.statut==="validé" && hj.debut && hj.fin){ const m=durationMinutes(hj.debut,hj.fin); if(m>0) mins+=m; } } return mins; }
+    function updateTotals(horaires){ document.getElementById("total-saisi").textContent=`Total saisi : ${toHM(computeTotalSaisi())}`; document.getElementById("total-valide").textContent=`Total validé : ${toHM(computeTotalValide(horaires))}`; }
+    function refreshInfo(){ infoSemaine.textContent=labelSemaine(currentMonday); }
 
     function loadFor(prenom){
-      const all = readAll();
-      const key = normalizeKey(prenom);
-      const rec = all?.[currentWeekKey]?.[key] || null;
-
+      const all=readAll();
+      const key=normalizeKey(prenom);
+      const rec=all?.[currentWeekKey]?.[key] || null;
       for(const j of jours){
-        const hj = rec?.jours?.[j];
-        if (hj){
-          selects[j].debut.value = hj.debut ?? "--";
-          selects[j].fin.value   = hj.fin   ?? "--";
-          const s = hj.statut || "en-attente";
-          selects[j].statut.textContent = s;
-          selects[j].statut.className = "statut " + s;
-          const lock = s === "validé";
-          selects[j].debut.disabled = lock;
-          selects[j].fin.disabled   = lock;
+        const hj=rec?.jours?.[j];
+        if(hj){
+          selects[j].debut.value=hj.debut ?? "--";
+          selects[j].fin.value  =hj.fin   ?? "--";
+          const s=hj.statut || "en-attente";
+          selects[j].statut.textContent=s;
+          selects[j].statut.className="statut "+s;
+          const lock=s==="validé";
+          selects[j].debut.disabled=lock;
+          selects[j].fin.disabled  =lock;
         } else {
           selects[j].debut.value="--";
           selects[j].fin.value="--";
@@ -207,66 +165,38 @@
       updateTotals(rec?.jours || {});
     }
 
-    document.getElementById("prevWeek").addEventListener("click", ()=>{
-      currentMonday = addWeeks(currentMonday, -1);
-      currentWeekKey = weekKeyFromMonday(currentMonday);
-      refreshInfo();
-      const p = document.getElementById("prenom").value.trim();
-      if (p) loadFor(p);
-    });
-    document.getElementById("nextWeek").addEventListener("click", ()=>{
-      currentMonday = addWeeks(currentMonday, 1);
-      currentWeekKey = weekKeyFromMonday(currentMonday);
-      refreshInfo();
-      const p = document.getElementById("prenom").value.trim();
-      if (p) loadFor(p);
-    });
-    document.getElementById("thisWeek").addEventListener("click", ()=>{
-      currentMonday = mondayOf(new Date());
-      currentWeekKey = weekKeyFromMonday(currentMonday);
-      refreshInfo();
-      const p = document.getElementById("prenom").value.trim();
-      if (p) loadFor(p);
-    });
+    document.getElementById("prevWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,-1); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); const p=document.getElementById("prenom").value.trim(); if(p) loadFor(p); });
+    document.getElementById("nextWeek").addEventListener("click", ()=>{ currentMonday=addWeeks(currentMonday,1);  currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); const p=document.getElementById("prenom").value.trim(); if(p) loadFor(p); });
+    document.getElementById("thisWeek").addEventListener("click", ()=>{ currentMonday=mondayOf(new Date()); currentWeekKey=weekKeyFromMonday(currentMonday); refreshInfo(); const p=document.getElementById("prenom").value.trim(); if(p) loadFor(p); });
 
-    for(const j of jours){
-      selects[j].debut.addEventListener("change", ()=>updateTotals());
-      selects[j].fin.addEventListener("change", ()=>updateTotals());
-    }
+    for(const j of jours){ selects[j].debut.addEventListener("change", ()=>updateTotals()); selects[j].fin.addEventListener("change", ()=>updateTotals()); }
 
-    document.getElementById("prenom").addEventListener("change", (e)=>{
-      const p = e.target.value.trim();
-      if (!p) return;
-      loadFor(p);
-    });
+    document.getElementById("prenom").addEventListener("change", (e)=>{ const p=e.target.value.trim(); if(!p) return; loadFor(p); });
 
     document.getElementById("envoyer").addEventListener("click", ()=>{
-      const prenomRaw = document.getElementById("prenom").value.trim();
-      if (!prenomRaw) return alert("Veuillez entrer votre prénom.");
-      const prenom = prenomRaw.replace(/\s+/g,' '); // affichage conservé
-      const key = normalizeKey(prenomRaw);
-
-      const all = readAll();
-      if (!all[currentWeekKey]) all[currentWeekKey]={};
-      const existing = all[currentWeekKey][key] || { prenom, jours:{} };
-
-      const nouveaux = {};
+      const prenomRaw=document.getElementById("prenom").value.trim();
+      if(!prenomRaw) return alert("Veuillez entrer votre prénom.");
+      const prenom=prenomRaw.replace(/\s+/g,' ');
+      const key=normalizeKey(prenomRaw);
+      const all=readAll();
+      if(!all[currentWeekKey]) all[currentWeekKey]={};
+      const existing=all[currentWeekKey][key] || { prenom, jours:{} };
+      const nouveaux={};
       for(const j of jours){
-        const d = selects[j].debut.value;
-        const f = selects[j].fin.value;
-        const m = durationMinutes(d,f);
-        if (d!=="--" && f!=="--"){
-          if (existing.jours?.[j]?.statut === "validé"){
-            nouveaux[j] = existing.jours[j]; // ne pas écraser
+        const d=selects[j].debut.value;
+        const f=selects[j].fin.value;
+        const m=durationMinutes(d,f);
+        if(d!=="--" && f!=="--"){
+          if(existing.jours?.[j]?.statut==="validé"){
+            nouveaux[j]=existing.jours[j];
           } else {
-            nouveaux[j] = { debut:d, fin:f, statut:"en-attente" };
+            nouveaux[j]={ debut:d, fin:f, statut:"en-attente" };
           }
-        } else if (existing.jours?.[j]?.statut === "validé") {
-          nouveaux[j] = existing.jours[j];
+        } else if(existing.jours?.[j]?.statut==="validé"){
+          nouveaux[j]=existing.jours[j];
         }
       }
-
-      all[currentWeekKey][key] = { prenom, jours: { ...(existing.jours||{}), ...nouveaux } };
+      all[currentWeekKey][key]={ prenom, jours:{ ...(existing.jours||{}), ...nouveaux } };
       writeAll(all);
       alert("Disponibilités enregistrées !");
       loadFor(prenom);
